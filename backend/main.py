@@ -422,7 +422,7 @@ async def update_sensor(data: SensorData):
                 
                 # --- NUEVO: ENVIAR DATOS A MAKE (WEBHOOK) ---
                 if total_monto > 0:  # Solo notifica si hay un cobro real
-                    webhook_url = "https://hook.us2.make.com/s1apiaxx54gnd7wdn5i3yhed56ci0bim"
+                    webhook_url = "https://hook.us2.make.com/g5a66gtglso9rdn4xjbnxx977osimzyd"
                     payload = {
                         "plaza": data.plaza,
                         "placa": plate,
