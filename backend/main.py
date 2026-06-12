@@ -14,6 +14,7 @@ from fastapi.responses import StreamingResponse
 from fpdf import FPDF
 from datetime import datetime
 import io
+import urllib.request
 
 # --- INICIALIZACIÓN DE SUPABASE ---
 supabase_url = os.environ.get("SUPABASE_URL")
@@ -418,6 +419,26 @@ async def update_sensor(data: SensorData):
                 })
 
                 ref_assign.delete()
+                
+                # --- NUEVO: ENVIAR DATOS A MAKE (WEBHOOK) ---
+                if total_monto > 0:  # Solo notifica si hay un cobro real
+                    webhook_url = "https://hook.us2.make.com/s1apiaxx54gnd7wdn5i3yhed56ci0bim"
+                    payload = {
+                        "plaza": data.plaza,
+                        "placa": plate,
+                        "minutos": diff_minutes,
+                        "monto": total_monto
+                    }
+                    try:
+                        req = urllib.request.Request(
+                            webhook_url, 
+                            data=json.dumps(payload).encode('utf-8'), 
+                            headers={'Content-Type': 'application/json'}
+                        )
+                        urllib.request.urlopen(req, timeout=5)
+                    except Exception as e:
+                        print(f"Error enviando Webhook a Make: {e}")
+                # ---------------------------------------------
                 
             except Exception as e:
                 raise HTTPException(status_code=500, detail=f"Error en facturación: {str(e)}")
