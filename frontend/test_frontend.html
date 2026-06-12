@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Frontend - Chai</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chai/4.3.7/chai.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mocha/3.2.0/mocha.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mocha/3.2.0/mocha.js"></script>
+
+    <style>
+        /* TU CSS ORIGINAL */
+        :root {
+            --slot-width: 50px; --bg-color: #f4f4f9; --wall-color: #9ca3af;
+            --wall-border: #4b5563; --slot-border: #374151;
+            --free-color: #86efac; --busy-color: #fca5a5; --error-color: #f59e0b;
+            --text-color: #1f2937;
+        }
+        .slot.libre { background-color: var(--free-color); }
+        .slot.ocupado { background-color: var(--busy-color); }
+        .slot.fallo { background-color: var(--error-color); }
+        /* Ajuste visual para ver los resultados arriba */
+        #mocha { margin: 0; padding: 20px; background: white; border-bottom: 5px solid #ccc; }
+        #app-container { opacity: 0.5; pointer-events: none; zoom: 0.6; border: 2px dashed red; margin: 20px; padding: 10px; }
+    </style>
+</head>
+<body>
+
+    <div id="mocha"></div>
+
+    <div id="app-container">
+        <header>
+            <h3>Entorno de Pruebas Visual</h3>
+            <div class="legend">
+                <div class="legend-item">Libre (<span id="free-count">-</span>)</div>
+                <div class="legend-item">Ocupado (<span id="busy-count">-</span>)</div>
+                <div class="legend-item">Alerta (<span id="error-count">0</span>)</div>
+            </div>
+        </header>
+
+        <div id="history-panel" class="history-panel">
+            <ul id="history-list" class="history-list"></ul>
+        </div>
+
+        <div class="blueprint-container">
+            <div class="parking-grid" id="grid-container"></div>
+        </div>
+
+        <div id="alert-system" class="alert-container"></div>
+    </div>
+
+    <script>
+        // --- VARIABLES GLOBALES ---
+        const gridContainer = document.getElementById('grid-container');
+        const alertSystem = document.getElementById('alert-system');
+        const historyList = document.getElementById('history-list');
+        const carSvg = `<svg class="car-icon" viewBox="0 0 24 24"><path d="M18.92 6c..."></path></svg>`;
+
+        // --- GENERACIÓN DE SLOTS ---
+        for (let i = 1; i <= 46; i++) {
+            const div = document.createElement('div');
+            div.className = 'slot libre'; 
+            div.id = `slot-${i}`;
+            div.innerHTML = `${carSvg}<span>${i}</span>`;
+            gridContainer.appendChild(div);
+        }
+
+        let activeAlerts = new Set();
+        let historyLog = [];
+
+        // --- FUNCIÓN A PROBAR ---
+        function updateUI(data) {
+            let free = 0, busy = 0, failures = 0;
+            
+            for (let i = 1; i <= 46; i++) {
+                const slotEl = document.getElementById(`slot-${i}`);
+                if (!slotEl) continue; 
+
+                let status = 'libre';
+                const slotData = data[i] || data[i.toString()];
+                if (slotData && slotData.status) status = slotData.status.toLowerCase();
+                
+                slotEl.className = `slot ${status}`;
+
+                if (status === 'ocupado') busy++;
+                else if (status === 'libre') free++;
+                
+                if (status === 'fallo') {
+                    failures++;
+                    if (!activeAlerts.has(i)) {
+                        showAlert(i, "Fallo de Sensor");
+                        addToHistory(i, "Fallo de conexión");
+                        activeAlerts.add(i);
+                    }
+                } else {
+                    if (activeAlerts.has(i)) {
+                        closeAlertAutomatically(i);
+                        activeAlerts.delete(i);
+                    }
+                }
+            }
+            
+            document.getElementById('free-count').textContent = free;
+            document.getElementById('busy-count').textContent = busy;
+            document.getElementById('error-count').textContent = failures;
+        }
+
+        function showAlert(slotId, message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert-box';
+            alertDiv.id = `alert-box-${slotId}`;
+            alertDiv.innerHTML = `Testing Alerta ${slotId}`;
+            alertSystem.appendChild(alertDiv);
+        }
+
+        function addToHistory(slotId, cause) {
+            historyLog.push({ id: slotId, time: "12:00" });
+            const item = document.createElement('li');
+            item.innerHTML = `<span>P${slotId} ${cause}</span>`;
+            historyList.appendChild(item);
+        }
+
+        function closeAlertAutomatically(slotId) {
+            const el = document.getElementById(`alert-box-${slotId}`);
+            if (el) el.remove();
+        }
+    </script>
+
+    <script>
+        mocha.setup('bdd');
+        const expect = chai.expect; // Usamos Chai
+
+        describe('Pruebas Frontend Estacionamiento', function() {
+
+            it('Debería contar correctamente plazas libres y ocupadas', function() {
+                const datosSimulados = {
+                    "1": { "status": "ocupado" },
+                    "2": { "status": "ocupado" },
+                    "3": { "status": "libre" }
+                };
+
+                updateUI(datosSimulados);
+
+                const textoOcupados = document.getElementById('busy-count').textContent;
+                const textoLibres = document.getElementById('free-count').textContent;
+
+                // Sintaxis Chai: expect(valor).to.equal(esperado)
+                expect(textoOcupados).to.equal('2'); 
+                expect(textoLibres).to.equal('44'); 
+            });
+
+            it('Debería cambiar la clase CSS a "ocupado"', function() {
+                const datos = { "10": { "status": "ocupado" } };
+                updateUI(datos);
+
+                const slot10 = document.getElementById('slot-10');
+                // Verificamos que la clase contenga la palabra 'ocupado'
+                expect(slot10.className).to.include('ocupado');
+            });
+
+            it('Debería generar alerta y registro histórico si hay "fallo"', function() {
+                historyLog = []; 
+                document.getElementById('history-list').innerHTML = '';
+                document.getElementById('alert-system').innerHTML = '';
+                activeAlerts.clear();
+
+                const datosFallo = { "5": { "status": "fallo" } };
+                
+                updateUI(datosFallo);
+
+                // Validaciones
+                expect(document.getElementById('error-count').textContent).to.equal('1');
+                expect(historyLog).to.have.lengthOf(1);
+                
+                const alerta = document.getElementById('alert-box-5');
+                expect(alerta).to.not.be.null; 
+            });
+
+            it('Debería cerrar la alerta automáticamente si el fallo se soluciona', function() {
+                // 1. Crear fallo
+                updateUI({ "5": { "status": "fallo" } });
+                expect(document.getElementById('alert-box-5')).to.not.be.null;
+
+                // 2. Solucionar fallo
+                updateUI({ "5": { "status": "libre" } });
+                
+                // 3. Verificar que desapareció
+                const alerta = document.getElementById('alert-box-5');
+                expect(alerta).to.be.null;
+            });
+
+        });
+
+        mocha.run();
+    </script>
+</body>
+</html>

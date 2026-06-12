@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estacionamiento Don Carlos - Trujillo</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- ==========================================
+         VISTA 1: INTERFAZ DEL OPERARIO 
+         ========================================== -->
+    <div id="view-operario" class="main-wrapper d-none">
+        
+        <!-- Panel Izquierdo: Plazas -->
+        <aside class="sidebar">
+            <div style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
+                
+                <!-- Identidad Corporativa Operario -->
+                <div class="brand-container">
+                    <h2>ESTACIONAMIENTO<br>DON CARLOS</h2>
+                    <small>TRUJILLO - OPERARIO</small>
+                </div>
+                
+                <!-- Leyenda del Operario -->
+                <div class="legend">
+                    <div><div class="dot free"></div>Libre (<span id="free-count">0</span>)</div>
+                    <div><div class="dot busy"></div>Ocupado (<span id="busy-count">0</span>)</div>
+                    <div><div class="dot error"></div>Alerta</div>
+                </div>
+
+                <button class="btn-assign" onclick="openAssignModal()">+ Asignar Placa a Plaza</button>
+                <button class="btn-assign" style="background-color: #10b981; margin-top: 10px;" onclick="openBillingModal()">🖨️ Centro de Boletas</button>
+                <h3 style="margin-bottom: 10px; font-size: 0.9rem; border-bottom: 2px solid #eee; padding-bottom: 5px; flex-shrink: 0;">Estado de Plazas</h3>
+                <div class="scroll-list">
+                    <ul class="list-unstyled" id="slots-list">
+                        <li style="text-align: center; color: #999; padding: 20px;">Cargando...</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Perfil y Salir Operario -->
+            <div class="sidebar-bottom">
+                <div class="profile-box">
+                    <div class="avatar">👤</div>
+                    <div class="profile-info">
+                        <strong id="operario-sidebar-email">Cargando...</strong>
+                        <span>Operador de Caseta</span>
+                    </div>
+                </div>
+                <button class="logout-btn" onclick="logout()">
+                    <svg class="logout-icon" viewBox="0 0 24 24"><path d="M16 13v-2H7V8l-5 4 5 4v-3z"/><path d="M20 3h-9c-1.103 0-2 .897-2 2v4h2V5h9v14h-9v-4H9v4c0 1.103.897 2 2 2h9c1.103 0 2-.897 2-2V5c0-1.103-.897-2-2-2z"/></svg>
+                    Cerrar sesión
+                </button>
+            </div>
+        </aside>
+
+        <!-- Panel Central: Mapa Interactivo -->
+        <main class="content-area">
+            <div class="blueprint-container">
+                <div class="parking-grid" id="grid-container">
+                    <div class="structure corner-square"></div>
+                    <div class="structure corner-square-bottom"></div>
+                    <div class="structure middle-fill"></div>
+                    <div class="structure tr"></div>
+                    <div class="structure bl"></div>
+                    <div class="structure corner-fill"></div>
+                    <div class="entrance">INGRESO ⬆</div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Panel Derecho: Historial -->
+        <aside class="history-sidebar">
+            <div class="history-header">
+                <h3 style="margin: 0; font-size: 1rem;">Historial Vehicular</h3>
+                <button class="btn-search-icon" onclick="openSearchModal()" title="Buscar">🔍</button>
+            </div>
+            <div class="scroll-list">
+                <div id="history-container">
+                    <div style="text-align: center; color: #999; padding: 20px;">Cargando historial...</div>
+                </div>
+            </div>
+            <button class="btn-full-history" onclick="openFullHistory()">Ver Historial Completo</button>
+        </aside>
+    </div>
+
+    <!-- ==========================================
+         VISTA 2: INTERFAZ DEL ADMINISTRADOR
+         ========================================== -->
+    <div id="view-admin" class="admin-wrapper d-none">
+        
+        <!-- Barra Lateral de Navegación Admin -->
+        <aside class="admin-sidebar">
+            <div class="admin-sidebar-top">
+                <!-- Identidad Corporativa Admin -->
+                <div class="brand-container" style="padding: 0 25px 15px 25px;">
+                    <h2>ESTACIONAMIENTO<br>DON CARLOS</h2>
+                    <small>TRUJILLO - ADMIN</small>
+                </div>
+
+                <div style="padding: 0 25px 15px 25px;">
+                    <h3 style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase;">Navegación</h3>
+                </div>
+                <button id="nav-reports" class="admin-nav-btn active" onclick="switchAdminTab('reports')">
+                    📊 Reportes
+                </button>
+                <button id="nav-users" class="admin-nav-btn" onclick="switchAdminTab('users')">
+                    👥 Gestión de Usuarios
+                </button>
+            </div>
+
+            <!-- Perfil y Salir Admin -->
+            <div class="sidebar-bottom" style="padding: 20px 25px; background: #f8fafc;">
+                <div class="profile-box">
+                    <div class="avatar">👤</div>
+                    <div class="profile-info">
+                        <strong id="admin-sidebar-email">Cargando...</strong>
+                        <span>Vista Admin</span>
+                    </div>
+                </div>
+                <button class="logout-btn" onclick="logout()">
+                    <svg class="logout-icon" viewBox="0 0 24 24"><path d="M16 13v-2H7V8l-5 4 5 4v-3z"/><path d="M20 3h-9c-1.103 0-2 .897-2 2v4h2V5h9v14h-9v-4H9v4c0 1.103.897 2 2 2h9c1.103 0 2-.897 2-2V5c0-1.103-.897-2-2-2z"/></svg>
+                    Cerrar sesión
+                </button>
+            </div>
+        </aside>
+
+        <!-- Contenido Dinámico Admin -->
+        <main class="admin-main-content">
+            
+            <!-- PESTAÑA 1: DASHBOARD Y REPORTES FINANCIEROS -->
+            <div id="tab-reports">
+                <h1 class="admin-header-title">Dashboard Financiero</h1>
+                <p class="admin-header-subtitle">Resumen operativo y descarga de auditorías vehiculares</p>
+
+                <div class="kpi-container">
+                    <div class="kpi-box"><p>Tickets Emitidos (Hoy)</p><h3 id="kpi-tickets">0</h3></div>
+                    <div class="kpi-box"><p>Recaudación (Hoy)</p><h3 id="kpi-revenue">S/ 0.00</h3></div>
+                </div>
+
+                <div class="admin-card" style="max-width: 500px;">
+                    <h2>📄 Exportar Archivo (PDF)</h2>
+                    <p style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">Extrae el reporte financiero de la recaudación por periodo de tiempo.</p>
+                    
+                    <select id="report-filter" class="form-control-admin">
+                        <option value="all">Filtro: Historial Completo</option>
+                        <option value="day">Filtro: Diario (Últimas 24 Hrs)</option>
+                        <option value="week">Filtro: Semanal (Últimos 7 Días)</option>
+                        <option value="month">Filtro: Mensual (Últimos 30 Días)</option>
+                    </select>
+
+                    <input type="password" id="admin-pass-pdf" class="form-control-admin" placeholder="Contraseña de Administrador">
+                    <button class="btn-action" onclick="downloadPDF()">Exportar PDF Auditado</button>
+                </div>
+            </div>
+
+            <!-- PESTAÑA 2: GESTIÓN DE USUARIOS -->
+            <div id="tab-users" class="d-none">
+                <h1 class="admin-header-title">Gestión de Usuarios</h1>
+                <p class="admin-header-subtitle">Roles, estados y accesos del sistema</p>
+
+                <div class="kpi-container">
+                    <div class="kpi-box"><p>Total</p><h3 id="kpi-u-total">0</h3></div>
+                    <div class="kpi-box"><p>Activos</p><h3 id="kpi-u-activos" style="color: #047857;">0</h3></div>
+                    <div class="kpi-box"><p>Congelados</p><h3 id="kpi-u-congelados" style="color: #d97706;">0</h3></div>
+                    <div class="kpi-box"><p>Bajas</p><h3 id="kpi-u-inactivos" style="color: #be123c;">0</h3></div>
+                </div>
+
+                <div class="users-grid">
+                    <div class="admin-card">
+                        <h2 style="color: #1d4ed8; border-bottom-color: #eff6ff;">Nuevo usuario</h2>
+                        <label style="font-size: 0.85rem; font-weight: bold; color: #475569;">Nombre y Apellido</label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="new-user-name" class="form-control-admin" placeholder="Nombre" style="margin-bottom: 10px;">
+                            <input type="text" id="new-user-lastname" class="form-control-admin" placeholder="Apellido" style="margin-bottom: 10px;">
+                        </div>
+                        
+                        <label style="font-size: 0.85rem; font-weight: bold; color: #475569;">Correo Electrónico</label>
+                        <input type="email" id="new-user-email" class="form-control-admin" placeholder="usuario@empresa.com" style="margin-bottom: 10px;">
+                        
+                        <label style="font-size: 0.85rem; font-weight: bold; color: #475569;">Contraseña inicial</label>
+                        <input type="password" id="new-user-pass" class="form-control-admin" placeholder="••••••••" style="margin-bottom: 10px;">
+                        
+                        <label style="font-size: 0.85rem; font-weight: bold; color: #475569;">Rol en el sistema</label>
+                        <select id="new-user-role" class="form-control-admin" style="margin-bottom: 20px;">
+                            <option value="operario">Operario</option>
+                            <option value="admin">Administrador</option>
+                        </select>
+
+                        <button class="btn-action" onclick="registerNewUser()">Crear usuario</button>
+                    </div>
+
+                    <div class="admin-card">
+                        <h2 style="color: #1d4ed8; border-bottom-color: #eff6ff;">Directorio de Personal</h2>
+                        <div id="directory-list" class="directory-list">
+                            <div style="text-align: center; color: #94a3b8; padding: 20px;">Cargando directorio...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ==========================================
+         MODALES
+         ========================================== -->
+    <div id="assignModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeAssignModal()">&times;</span>
+            <h2 style="margin-bottom: 20px; text-align: center;">Registrar Vehículo</h2>
+            <div class="form-group">
+                <label>Número de Placa:</label>
+                <input type="text" id="plate-input" class="form-control" placeholder="Ej: ABC-123" maxlength="10" style="text-transform: uppercase;">
+                <div id="plate-error" class="error-msg"></div>
+            </div>
+            <div class="form-group">
+                <label>Seleccionar Plaza:</label>
+                <select id="slot-select" class="form-control"></select>
+            </div>
+            <button class="btn-save" onclick="saveAssignment()">Guardar Registro</button>
+        </div>
+    </div>
+
+    <div id="ticketModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeTicketModal()">&times;</span>
+            <div id="ticket-print-area" class="ticket-preview">
+                <h3>ESTACIONAMIENTO<br>DON CARLOS</h3>
+                <p>RUC: 20123456789</p>
+                <div class="ticket-divider"></div>
+                <p><strong>TICKET DE INGRESO</strong></p>
+                <div class="ticket-big" id="tk-placa">ABC-123</div>
+                <p>PLAZA ASIGNADA: <strong id="tk-plaza" style="font-size: 1.2rem;">15</strong></p>
+                <div class="ticket-divider"></div>
+                <p style="text-align: left;"><strong>FECHA:</strong> <span id="tk-fecha"></span></p>
+                <p style="text-align: left;"><strong>HORA:</strong> <span id="tk-hora"></span></p>
+                <div class="ticket-divider"></div>
+                <p><small>Conserve este ticket.<br>Tarifa: S/ 5.00 por hora o fracción.</small></p>
+            </div>
+            <button class="btn-action" style="margin-top: 15px;" onclick="window.print()">🖨️ Imprimir Ticket</button>
+        </div>
+    </div>
+
+    <div id="searchModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeSearchModal()">&times;</span>
+            <h2 style="margin-bottom: 20px; text-align: center;">Buscar en Historial</h2>
+            <div class="form-group">
+                <label>Buscar por Placa:</label>
+                <input type="text" id="search-plate" class="form-control" placeholder="Ej: ABC-123" style="text-transform:uppercase;">
+            </div>
+            <div class="form-group">
+                <label>Buscar por Fecha:</label>
+                <input type="date" id="search-date" class="form-control">
+            </div>
+            <button class="btn-search-action" onclick="filterHistory()">🔍 Buscar</button>
+        </div>
+    </div>
+
+    <div id="billingModal" class="modal" style="z-index: 9999;">
+        <div class="modal-content" style="background: #ffffff; border-radius: 12px; box-shadow: 0px 10px 30px rgba(0,0,0,0.5); max-width: 800px; width: 90%; max-height: 85vh; margin: 5vh auto; display: flex; flex-direction: column; padding: 25px; box-sizing: border-box; position: relative;">
+            
+            <span class="close-modal" onclick="closeBillingModal()">&times;</span>
+            
+            <div style="flex-shrink: 0;">
+                <h2 style="margin-top: 0; margin-bottom: 5px; text-align: center; color: #333;">Centro de Facturación e Impresión</h2>
+                <p style="text-align: center; color: #666; margin-bottom: 20px;">Transacciones completadas por los sensores.</p>
+                
+                <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e2e8f0; flex-wrap: wrap; gap: 10px;">
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-action" style="background-color: #3b82f6; padding: 6px 15px; font-size: 13px;" onclick="setBillingFilter('today')">Hoy</button>
+                        <button class="btn-action" style="background-color: #64748b; padding: 6px 15px; font-size: 13px;" onclick="setBillingFilter('yesterday')">Ayer</button>
+                        <button class="btn-action" style="background-color: #0f172a; padding: 6px 15px; font-size: 13px;" onclick="setBillingFilter('all')">Todos</button>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label style="font-weight: bold; color: #475569; font-size: 14px; margin: 0;">📅 Fecha:</label>
+                        <input type="date" id="billing-date" class="form-control" style="width: auto; padding: 5px; margin: 0;" onchange="renderBillingTable()">
+                    </div>
+                </div>
+            </div>
+
+            <div style="overflow-y: auto; flex-grow: 1; border-top: 1px solid #e2e8f0; padding-top: 10px;">
+                <table class="history-table" style="width: 100%; margin: 0; border-collapse: collapse;">
+                    <thead style="position: sticky; top: 0; background: #fff; z-index: 1; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <tr>
+                            <th style="padding: 10px; border-bottom: 2px solid #ddd; color: #333;">Plaza</th>
+                            <th style="padding: 10px; border-bottom: 2px solid #ddd; color: #333;">Placa</th>
+                            <th style="padding: 10px; border-bottom: 2px solid #ddd; color: #333;">Salida</th>
+                            <th style="padding: 10px; border-bottom: 2px solid #ddd; color: #333;">Monto</th>
+                            <th style="padding: 10px; border-bottom: 2px solid #ddd; color: #333;">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="billing-table-body">
+                        </tbody>
+                </table>
+            </div>
+            
+        </div>
+    </div>
+
+    <div id="fullHistoryModal" class="modal">
+        <div class="modal-content large">
+            <span class="close-modal" onclick="closeFullHistory()">&times;</span>
+            <div class="nav-header">
+                <button id="nav-back-btn" class="btn-back" onclick="navigateBack()">⬅ Atrás</button>
+                <h3 id="nav-title" style="margin:0;">Seleccione Año</h3>
+            </div>
+            <div id="nav-container"></div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         SCRIPTS Y LÓGICA
+         ========================================== -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyB65kW5p7JZqhu2M2KiTSpKrz_CsguANnE",
+            authDomain: "iot-car-parking-43374.firebaseapp.com",
+            databaseURL: "https://iot-car-parking-43374-default-rtdb.firebaseio.com",
+            projectId: "iot-car-parking-43374",
+            storageBucket: "iot-car-parking-43374.firebasestorage.app"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+
+
+        const BACKEND_URL = "https://backend-estacionamiento.vercel.app";   
+        const jwtToken = localStorage.getItem('jwt_token');
+        const userRole = localStorage.getItem('user_role') || 'operario';
+
+        if (!jwtToken) {
+            window.location.href = "login.html";
+        } else {
+            let userEmail = "Usuario";
+            let finalRole = userRole;
+            
+            try {
+                const payload = JSON.parse(atob(jwtToken.split('.')[1]));
+                userEmail = payload.sub;
+                
+                // Regla maestra de administrador
+                if (userEmail.toLowerCase() === "navaz12@gmail.com") {
+                    finalRole = "admin";
+                }
+            } catch(e) {}
+            
+            // 1. Mostramos la pantalla y ponemos un texto temporal mientras busca
+            if (finalRole === "admin") {
+                document.getElementById('view-admin').classList.remove('d-none');
+                document.getElementById('admin-sidebar-email').innerText = "Cargando perfil...";
+                loadAdminMetrics(); 
+                loadUsersDirectory(); 
+            } else {
+                document.getElementById('view-operario').classList.remove('d-none');
+                document.getElementById('operario-sidebar-email').innerText = "Cargando perfil...";
+                initOperarioSystem();
+            }
+
+            // 2. Buscamos el Nombre y Apellido en Firebase
+            database.ref('users').once('value').then((snapshot) => {
+                const users = snapshot.val();
+                if (users) {
+                    for (const uid in users) {
+                        if (users[uid].email === userEmail) {
+                            // Encontramos al usuario, unimos su nombre y apellido
+                            const fullName = `${users[uid].name} ${users[uid].lastname || ''}`.trim();
+                            
+                            // Reemplazamos el texto temporal por el nombre real
+                            if (finalRole === "admin") {
+                                document.getElementById('admin-sidebar-email').innerText = fullName;
+                            } else {
+                                document.getElementById('operario-sidebar-email').innerText = fullName;
+                            }
+                            break; // Terminamos la búsqueda
+                        }
+                    }
+                }
+            }).catch(() => {
+                // Si falla la conexión, dejamos el correo como Plan B
+                if (finalRole === "admin") document.getElementById('admin-sidebar-email').innerText = userEmail;
+                else document.getElementById('operario-sidebar-email').innerText = userEmail;
+            });
+        }
+
+        function logout() { localStorage.clear(); window.location.href = "login.html"; }
+
+        // --- LÓGICA DEL ADMIN ---
+        function switchAdminTab(tabName) {
+            document.getElementById('tab-reports').classList.add('d-none');
+            document.getElementById('tab-users').classList.add('d-none');
+            document.getElementById(`tab-${tabName}`).classList.remove('d-none');
+
+            document.getElementById('nav-reports').classList.remove('active');
+            document.getElementById('nav-users').classList.remove('active');
+            document.getElementById(`nav-${tabName}`).classList.add('active');
+        }
+
+        function loadAdminMetrics() {
+            database.ref('history').on('value', (snapshot) => {
+                const historyData = snapshot.val() || {};
+                
+                let revenueToday = 0;
+                let ticketsToday = 0;
+
+                // 1. Calculamos la hora exacta de la medianoche de hoy (00:00:00)
+                const now = new Date();
+                const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+                Object.values(historyData).forEach(r => {
+                    // Leemos el formato manual o automático
+                    const exitMs = r.exitTime || r.endTime || 0;
+                    
+                    // 2. Solo sumamos si el vehículo salió HOY (después de medianoche)
+                    if (exitMs >= startOfDay) {
+                        ticketsToday++;
+                        const monto = r.amountPaid || r.amount || r.cobro || 0;
+                        revenueToday += parseFloat(monto);
+                    }
+                });
+
+                // 3. Contamos los vehículos que están estacionados AHORA MISMO
+                database.ref('assignments').once('value').then((assignSnap) => {
+                    const activeTickets = assignSnap.val() ? Object.keys(assignSnap.val()).length : 0;
+                    
+                    // Mostramos la suma en pantalla
+                    document.getElementById('kpi-tickets').innerText = ticketsToday + activeTickets;
+                    document.getElementById('kpi-revenue').innerText = `S/ ${revenueToday.toFixed(2)}`;
+                });
+            });
+        }
+
+        function loadUsersDirectory() {
+            database.ref('users').on('value', (snapshot) => {
+                const usersData = snapshot.val() || {};
+                const container = document.getElementById('directory-list');
+                container.innerHTML = "";
+
+                let total = 0, activos = 0, congelados = 0, deshabilitados = 0;
+
+                Object.keys(usersData).forEach(uid => {
+                    const u = usersData[uid];
+                    total++;
+                    
+                    // Aseguramos compatibilidad con cuentas antiguas
+                    let currentStatus = u.status;
+                    if (!currentStatus) currentStatus = (u.is_active === false) ? 'deshabilitado' : 'activo';
+
+                    if (currentStatus === 'activo') activos++;
+                    else if (currentStatus === 'congelado') congelados++;
+                    else deshabilitados++;
+
+                    let statusClass = '', statusText = '', btnHtml = '';
+
+                    if (currentStatus === 'activo') {
+                        statusClass = 'active'; statusText = 'Activo';
+                        btnHtml = `
+                            <button class="btn-small-warning" onclick="freezeUserDirect('${uid}')">Congelar</button>
+                            <button class="btn-small-danger" onclick="disableUserDirect('${uid}')">Deshabilitar</button>
+                        `;
+                    } else if (currentStatus === 'congelado') {
+                        statusClass = 'frozen'; statusText = 'Congelado';
+                        btnHtml = `
+                            <button class="btn-small-success" onclick="reactivateUserDirect('${uid}')">Activar</button>
+                            <button class="btn-small-danger" onclick="disableUserDirect('${uid}')">Deshabilitar</button>
+                        `;
+                    } else {
+                        // Estado Irreversible: Baja Definitiva (Soft Delete)
+                        statusClass = 'inactive'; statusText = 'Baja';
+                        btnHtml = `
+                            <span style="font-size:0.75rem; color:#94a3b8; font-style: italic;">Cuenta inhabilitada permanentemente</span>
+                        `;
+                    }
+
+                    container.innerHTML += `
+                        <div class="user-card">
+                            <div class="user-info">
+                                <strong>${u.name} ${u.lastname || ''}</strong>
+                                <span>${u.email}</span>
+                            </div>
+                            <div class="user-badges">
+                                <span class="badge badge-role">${u.role}</span>
+                                <span class="badge-status badge-${statusClass}">${statusText}</span>
+                                <div style="display: flex; gap: 5px; margin-left: 10px; align-items: center;">
+                                    ${btnHtml}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                document.getElementById('kpi-u-total').innerText = total;
+                document.getElementById('kpi-u-activos').innerText = activos;
+                document.getElementById('kpi-u-congelados').innerText = congelados;
+                document.getElementById('kpi-u-inactivos').innerText = deshabilitados;
+            });
+        }
+
+        // ==========================================
+        // FUNCIONES DEL ADMINISTRADOR (Con SweetAlert2)
+        // ==========================================
+
+        async function freezeUserDirect(userId) {
+            const confirmacion = await Swal.fire({
+                title: '¿Congelar cuenta?',
+                text: 'El usuario perderá acceso temporalmente hasta su regreso.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d97706',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Sí, congelar',
+                cancelButtonText: 'Cancelar'
+            });
+            if (!confirmacion.isConfirmed) return;
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/users/${userId}/freeze`, { method: 'PUT', headers: { 'Authorization': `Bearer ${jwtToken}` } });
+                if (response.ok) {
+                    Swal.fire({ icon: 'success', title: 'Cuenta congelada', showConfirmButton: false, timer: 1500 });
+                } else { 
+                    const data = await response.json(); Swal.fire({ icon: 'error', title: 'Error', text: data.detail }); 
+                }
+            } catch (error) { Swal.fire({ icon: 'error', title: 'Error de conexión' }); }
+        }
+
+        async function disableUserDirect(userId) {
+            const confirmacion = await Swal.fire({
+                title: '⚠️ ¿Aplicar baja definitiva?',
+                text: 'El usuario ya no pertenece a la empresa. Esta acción es drástica.',
+                icon: 'error',
+                showCancelButton: true,
+                confirmButtonColor: '#be123c',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Sí, deshabilitar',
+                cancelButtonText: 'Cancelar'
+            });
+            if (!confirmacion.isConfirmed) return;
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/users/${userId}/disable`, { method: 'PUT', headers: { 'Authorization': `Bearer ${jwtToken}` } });
+                if (response.ok) {
+                    Swal.fire({ icon: 'success', title: 'Usuario deshabilitado', showConfirmButton: false, timer: 1500 });
+                } else { 
+                    const data = await response.json(); Swal.fire({ icon: 'error', title: 'Error', text: data.detail }); 
+                }
+            } catch (error) { Swal.fire({ icon: 'error', title: 'Error de conexión' }); }
+        }
+
+        async function reactivateUserDirect(userId) {
+            const confirmacion = await Swal.fire({
+                title: '¿Reactivar acceso?',
+                text: 'El usuario volverá a tener acceso al sistema.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#059669',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Sí, reactivar',
+                cancelButtonText: 'Cancelar'
+            });
+            if (!confirmacion.isConfirmed) return;
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/users/${userId}/reactivate`, { method: 'PUT', headers: { 'Authorization': `Bearer ${jwtToken}` } });
+                if (response.ok) {
+                    Swal.fire({ icon: 'success', title: 'Acceso restaurado', showConfirmButton: false, timer: 1500 });
+                } else { 
+                    const data = await response.json(); Swal.fire({ icon: 'error', title: 'Error', text: data.detail }); 
+                }
+            } catch (error) { Swal.fire({ icon: 'error', title: 'Error de conexión' }); }
+        }
+
+        async function registerNewUser() {
+            const name = document.getElementById('new-user-name').value.trim();
+            const lastname = document.getElementById('new-user-lastname').value.trim();
+            const email = document.getElementById('new-user-email').value.trim();
+            const pass = document.getElementById('new-user-pass').value.trim();
+            const role = document.getElementById('new-user-role').value;
+
+            if (!name || !lastname || !email || !pass) {
+                return Swal.fire({ icon: 'warning', title: 'Campos vacíos', text: 'Complete todos los campos.' });
+            }
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/auth/register`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${jwtToken}` },
+                    body: JSON.stringify({ name: name, lastname: lastname, email: email, password: pass, role: role })
+                });
+
+                if (response.ok) {
+                    Swal.fire({ icon: 'success', title: 'Registro exitoso', showConfirmButton: false, timer: 1500 });
+                    document.getElementById('new-user-name').value = ""; document.getElementById('new-user-lastname').value = "";
+                    document.getElementById('new-user-email').value = ""; document.getElementById('new-user-pass').value = "";
+                } else { 
+                    const data = await response.json(); Swal.fire({ icon: 'error', title: 'Error', text: data.detail }); 
+                }
+            } catch (error) { Swal.fire({ icon: 'error', title: 'Error de conexión' }); }
+        }
+
+        async function downloadPDF() {
+            const pass = document.getElementById('admin-pass-pdf').value;
+            const filterType = document.getElementById('report-filter').value;
+            
+            if (!pass) {
+                return Swal.fire({ icon: 'warning', title: 'Contraseña requerida', text: 'Ingrese su contraseña de administrador.' });
+            }
+
+            // Alerta de carga mientras el servidor fabrica el PDF
+            Swal.fire({
+                title: 'Generando reporte...',
+                text: 'Por favor, espere.',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/reports/download-pdf`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${jwtToken}` },
+                    body: JSON.stringify({ password: pass, filter_type: filterType })
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob(); const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a'); a.href = url; a.download = `reporte_auditoria_${filterType}.pdf`;
+                    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                    
+                    Swal.fire({ icon: 'success', title: 'Reporte exportado', showConfirmButton: false, timer: 1500 });
+                    document.getElementById('admin-pass-pdf').value = ""; 
+                } else {
+                    const data = await response.json(); Swal.fire({ icon: 'error', title: 'Acceso Denegado', text: data.detail });
+                }
+            } catch (error) { Swal.fire({ icon: 'error', title: 'Error de conexión' }); }
+        }
+
+        // --- LÓGICA DEL OPERARIO ---
+        let assignmentsData = {}, fullHistoryData = [], historyTree = {}, currentLevel = 'years', selectedYear = null, selectedMonth = null;
+
+        function initOperarioSystem() {
+            initParkingMap(); populateSlotSelect(); listenAssignments(); listenHistory(); setInterval(updateTimersView, 60000); 
+        }
+
+        function initParkingMap() {
+            const gridContainer = document.getElementById('grid-container');
+            const carSvg = `<svg class="car-icon" viewBox="0 0 24 24"><path d="M18.92 6c-.2-.58-.76-1-1.42-1h-11c-.66 0-1.22.42-1.42 1L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-6z"/></svg>`;
+            for (let i = 1; i <= 46; i++) {
+                if(!document.getElementById(`slot-${i}`)) {
+                    const div = document.createElement('div'); div.className = 'slot fallo'; div.id = `slot-${i}`; div.innerHTML = `${carSvg}<span>${i}</span>`; gridContainer.appendChild(div);
+                }
+            }
+            database.ref('parking_slots').on('value', (snapshot) => { updateMapUI(snapshot.val() || {}); });
+        }
+
+        function updateMapUI(data) {
+             let free = 0, busy = 0;
+             for (let i = 1; i <= 46; i++) {
+                const slotEl = document.getElementById(`slot-${i}`);
+                if(!slotEl) continue;
+                let status = 'fallo'; const slotData = data[i] || data[i.toString()];
+                if (slotData && slotData.status) status = slotData.status.toLowerCase();
+                slotEl.className = `slot ${status}`;
+                if (status === 'ocupado') busy++; else if (status === 'libre') free++;
+             }
+             document.getElementById('free-count').textContent = free; document.getElementById('busy-count').textContent = busy;
+        }
+
+        const assignModal = document.getElementById('assignModal');
+        const ticketModal = document.getElementById('ticketModal');
+
+        function openAssignModal() { document.getElementById('plate-input').value = ""; document.getElementById('plate-error').style.display = "none"; assignModal.style.display = "block"; }
+        function closeAssignModal() { assignModal.style.display = "none"; }
+        function closeTicketModal() { ticketModal.style.display = "none"; }
+        
+        function populateSlotSelect() {
+            const select = document.getElementById('slot-select'); select.innerHTML = "";
+            for(let i=1; i<=46; i++){ select.innerHTML += `<option value="${i}">Plaza ${i}</option>`; }
+        }
+
+        async function saveAssignment() {
+            const plateInput = document.getElementById('plate-input'); 
+            const slotId = document.getElementById('slot-select').value; 
+            let plate = plateInput.value.trim().toUpperCase();
+            
+            if (plate.length < 6 || plate.length > 10) return showError("La placa debe tener entre 6 y 10 caracteres.");
+            const validChars = /^[A-Z0-9-]+$/; 
+            if (!validChars.test(plate)) return showError("Solo letras, números y guiones.");
+            
+            const timestamp = Date.now();
+
+            // --- ESCUDO ANTI DOBLE-CLIC ---
+            const btnSave = document.querySelector('#assignModal .btn-save');
+            btnSave.disabled = true;
+            btnSave.innerText = "Guardando...";
+
+            try {
+                // --- CONEXIÓN AL BACKEND ---
+                const response = await fetch(`${BACKEND_URL}/api/sensors/update`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        plaza: parseInt(slotId), 
+                        estado: "ocupado",
+                        placa: plate,
+                        origen: "web" // <--- ETIQUETA AÑADIDA
+                    })
+                });
+
+                if (!response.ok) throw new Error("Fallo en el servidor");
+
+                closeAssignModal(); 
+                const dateObj = new Date(timestamp);
+                document.getElementById('tk-placa').innerText = plate; 
+                document.getElementById('tk-plaza').innerText = slotId;
+                document.getElementById('tk-fecha').innerText = dateObj.toLocaleDateString('es-PE'); 
+                document.getElementById('tk-hora').innerText = dateObj.toLocaleTimeString('es-PE', {hour: '2-digit', minute: '2-digit'});
+                ticketModal.style.display = "block";
+
+            } catch (error) {
+                alert("Error al registrar en BD: " + error.message);
+            } finally {
+                // --- QUITAMOS EL ESCUDO AL TERMINAR ---
+                btnSave.disabled = false;
+                btnSave.innerText = "Guardar Registro";
+            }
+        }
+
+        function showError(msg) { const el = document.getElementById('plate-error'); el.innerText = msg; el.style.display = "block"; }
+
+        function listenAssignments() { database.ref('assignments').on('value', (snapshot) => { assignmentsData = snapshot.val() || {}; renderSidebarList(); }); }
+
+        function renderSidebarList() {
+            const listContainer = document.getElementById('slots-list'); listContainer.innerHTML = "";
+
+            for (let i = 1; i <= 46; i++) {
+                const li = document.createElement('li'); li.className = "sidebar-item";
+                const assignment = assignmentsData[i] || assignmentsData[i.toString()];
+                if (assignment) {
+                    // NUEVO: Si está esperando que llegue el auto
+                    if (assignment.startTime === 0) {
+                        li.innerHTML = `<div style="display:flex;flex-direction:column;"><div><strong style="color:#2563eb;">Plaza ${i}</strong> <span class="plate-display">${assignment.plate}</span></div><span class="timer-display" style="color:#d97706; font-weight:bold;">⏳ Esperando que estacione...</span></div>`;
+                        } else {
+                        const diffMs = Date.now() - assignment.startTime; 
+                        const diffMinutes = Math.floor(diffMs / 60000); 
+                        
+                        let hours = Math.ceil(diffMinutes / 60);
+                        if (hours === 0) hours = 1; 
+                                                
+                        li.innerHTML = `<div style="display:flex;flex-direction:column;"><div><strong style="color:#2563eb;">Plaza ${i}</strong> <span class="plate-display">${assignment.plate}</span></div><span class="timer-display">⏱ ${calculateTime(assignment.startTime)} | <b style="color:#059669;">S/ ${(hours * 5).toFixed(2)}</b></span></div>`;
+                    }
+                } else {
+                    li.innerHTML = `<div style="color:#999;">Plaza ${i} <small>(Sin placa)</small></div>`;
+                }
+                listContainer.appendChild(li);
+            }
+        }
+
+        window.confirmRelease = async function(slotId) {
+            const data = assignmentsData[slotId]; 
+            if (!data) return;
+            
+            let diffMinutes = 0;
+            let hoursToCharge = 0;
+            let totalToPay = "0.00";
+            let timeStr = "0 min";
+
+            // NUEVO: ¿Llegó a estacionar o fue cancelado?
+            if (data.startTime > 0) {
+                diffMinutes = Math.floor((Date.now() - data.startTime) / 60000); 
+                hoursToCharge = Math.ceil(diffMinutes / 60);
+                if (hoursToCharge === 0) hoursToCharge = 1; 
+                totalToPay = (hoursToCharge * 3.00).toFixed(2);
+                timeStr = formatMinutosAHras(diffMinutes);
+            } else {
+                timeStr = "<span style='color:red; font-weight:bold;'>Cancelado (El auto nunca llegó)</span>";
+            }
+            
+            const confirmacion = await Swal.fire({
+                title: `LIQUIDACIÓN - PLAZA ${slotId}`,
+                html: `
+                    <div style="text-align: left; font-size: 16px;">
+                        <p><b>Placa:</b> <span style="background-color: #ffc107; padding: 2px 6px; border-radius: 4px; font-weight: bold; color: #000;">${data.plate}</span></p>
+                        <p><b>Tiempo transcurrido:</b> ${timeStr}</p>
+                        <h3 style="color: #198754; text-align: center; margin-top: 20px; border-top: 1px solid #ddd; padding-top: 15px;">
+                            Total a Cobrar: S/ ${totalToPay}
+                        </h3>
+                    </div>
+                    <p style="margin-top: 15px; font-size: 14px; color: #666;">¿Confirmar operación y liberar plaza?</p>
+                `,
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonColor: '#0d6efd',
+                cancelButtonColor: '#dc3545',
+                confirmButtonText: 'Aceptar',
+                cancelButtonText: 'Cancelar'
+            });
+
+            if (confirmacion.isConfirmed) {
+                try {
+                    Swal.fire({ title: 'Procesando pago en BD...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+
+                    const response = await fetch(`${BACKEND_URL}/api/sensors/update`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ plaza: parseInt(slotId), estado: "libre", origen: "web" })
+                    });
+
+                    if (!response.ok) throw new Error("Fallo en el servidor");
+                    Swal.fire({ icon: 'success', title: '¡Operación Registrada!', text: 'La boleta se generó en Supabase exitosamente.', timer: 1500, showConfirmButton: false });
+                } catch (error) {
+                    Swal.fire({ icon: 'error', title: 'Error de base de datos', text: 'Hubo un problema al registrar la operación.', confirmButtonColor: '#0d6efd' });
+                }
+            }
+        }
+
+        const searchModal = document.getElementById('searchModal'); function openSearchModal() { searchModal.style.display = "block"; } function closeSearchModal() { searchModal.style.display = "none"; }
+        const fullHistoryModal = document.getElementById('fullHistoryModal'); function openFullHistory() { processHierarchy(); renderYears(); fullHistoryModal.style.display = "block"; } function closeFullHistory() { fullHistoryModal.style.display = "none"; }
+        window.onclick = function(event) { if (event.target == assignModal) closeAssignModal(); if (event.target == searchModal) closeSearchModal(); if (event.target == fullHistoryModal) closeFullHistory(); if (event.target == ticketModal) closeTicketModal(); }
+
+        function listenHistory() {
+            database.ref('history').limitToLast(200).on('value', (snapshot) => {
+                fullHistoryData = []; const data = snapshot.val();
+                if(data) { 
+                    Object.keys(data).forEach(key => { fullHistoryData.push(data[key]); }); 
+                    
+                    // FIX ORDEN: Ordenamos usando exitTime (manual) o endTime (automático)
+                    fullHistoryData.sort((a, b) => {
+                        const timeA = a.exitTime || a.endTime || 0;
+                        const timeB = b.exitTime || b.endTime || 0;
+                        return timeB - timeA; // Esto asegura que el más nuevo salga arriba
+                    }); 
+                }
+                renderSidebarHistory(fullHistoryData);
+            });
+        }
+
+        function renderSidebarHistory(dataToRender) {
+            const container = document.getElementById('history-container');
+            container.innerHTML = "";
+            if (dataToRender.length === 0) { container.innerHTML = `<div style="text-align:center;color:#999;padding:20px;">Sin registros.</div>`; return; }
+
+            dataToRender.slice(0, 20).forEach(item => {
+                // FIX FECHAS: Leemos ambos formatos
+                const inMs = item.entryTime || item.startTime;
+                const outMs = item.exitTime || item.endTime;
+                
+                const entry = new Date(inMs); const exit = new Date(outMs);
+                const entryStr = entry.toLocaleDateString() + ' ' + entry.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                const exitStr = exit.toLocaleDateString() + ' ' + exit.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                
+                // FIX COBRO: Leemos ambos formatos
+                const rawMonto = item.amountPaid || item.amount || item.cobro || 0;
+                const monto = parseFloat(rawMonto).toFixed(2);
+
+                const div = document.createElement('div'); div.className = "history-item";
+                div.innerHTML = `
+                    <strong>Placa: ${item.plate || item.placa} <span style="float:right;color:#2563eb;">P${item.slot || item.plaza}</span></strong>
+                    <span class="history-date">📥 Ingreso: ${entryStr}</span>
+                    <span class="history-date">📤 Salida: ${exitStr}</span>
+                    <span class="history-date" style="color: #059669; font-weight: bold; margin-top: 4px;">
+                        💵 Cobro: S/ ${monto}
+                    </span>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        window.filterHistory = function() {
+            const plateQuery = document.getElementById('search-plate').value.trim().toUpperCase(); const dateQuery = document.getElementById('search-date').value;
+            const filtered = fullHistoryData.filter(item => {
+                const realPlate = item.plate || item.placa || "";
+                const matchPlate = plateQuery ? realPlate.includes(plateQuery) : true; 
+                let matchDate = true;
+                if (dateQuery) {
+                    const inMs = item.entryTime || item.startTime || 0;
+                    const outMs = item.exitTime || item.endTime || 0;
+                    const entryDate = new Date(inMs).toISOString().split('T')[0]; 
+                    const exitDate = new Date(outMs).toISOString().split('T')[0]; 
+                    matchDate = (entryDate === dateQuery || exitDate === dateQuery);
+                } return matchPlate && matchDate;
+            }); renderSidebarHistory(filtered); closeSearchModal();
+        }
+
+        const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+        function processHierarchy() {
+            historyTree = {}; 
+            
+            fullHistoryData.forEach(record => {
+                const timeOut = record.exitTime || record.endTime || Date.now();
+                const date = new Date(timeOut); 
+                
+                // ESCUDO: Si la fecha está corrupta por pruebas anteriores, saltamos este registro
+                if (isNaN(date.getTime())) {
+                    return; 
+                }
+
+                const y = date.getFullYear(); 
+                const m = date.getMonth(); 
+                const d = date.getDate();
+                
+                if(!historyTree[y]) historyTree[y] = {}; 
+                if(!historyTree[y][m]) historyTree[y][m] = {}; 
+                if(!historyTree[y][m][d]) historyTree[y][m][d] = []; 
+                
+                historyTree[y][m][d].push(record);
+            });
+        }
+
+        function navigateBack() { if(currentLevel === 'records') renderDays(selectedYear, selectedMonth); else if (currentLevel === 'days') renderMonths(selectedYear); else if (currentLevel === 'months') renderYears(); }
+        function updateNavUI(title, showBack) { document.getElementById('nav-title').innerText = title; document.getElementById('nav-back-btn').style.display = showBack ? 'block' : 'none'; }
+
+        function renderYears() {
+            currentLevel = 'years'; updateNavUI("Seleccione Año", false); const container = document.getElementById('nav-container'); container.innerHTML = '<div class="grid-nav"></div>'; const grid = container.querySelector('.grid-nav');
+            const years = Object.keys(historyTree).sort((a,b) => b-a); if(years.length === 0) { container.innerHTML = "<p style='text-align:center'>No hay registros.</p>"; return; }
+            years.forEach(y => { const btn = document.createElement('div'); btn.className = 'nav-btn'; btn.innerText = y; btn.onclick = () => renderMonths(y); grid.appendChild(btn); });
+        }
+
+        function renderMonths(year) {
+            currentLevel = 'months'; selectedYear = year; updateNavUI(`Año ${year} - Seleccione Mes`, true); const container = document.getElementById('nav-container'); container.innerHTML = '<div class="grid-nav"></div>'; const grid = container.querySelector('.grid-nav');
+            const months = Object.keys(historyTree[year]).sort((a,b) => a-b); months.forEach(m => { const btn = document.createElement('div'); btn.className = 'nav-btn'; btn.innerText = monthNames[m]; btn.onclick = () => renderDays(year, m); grid.appendChild(btn); });
+        }
+
+        function renderDays(year, month) {
+            currentLevel = 'days'; selectedMonth = month; updateNavUI(`${monthNames[month]} ${year} - Seleccione Día`, true); const container = document.getElementById('nav-container'); container.innerHTML = '<div class="grid-nav"></div>'; const grid = container.querySelector('.grid-nav');
+            const days = Object.keys(historyTree[year][month]).sort((a,b) => a-b); days.forEach(d => { const btn = document.createElement('div'); btn.className = 'nav-btn day-btn'; btn.innerText = `Día ${d}`; btn.onclick = () => renderDailyTable(year, month, d); grid.appendChild(btn); });
+        }
+
+        function renderDailyTable(year, month, day) {
+            currentLevel = 'records'; 
+            updateNavUI(`Registros del ${day} de ${monthNames[month]} de ${year}`, true); 
+            const container = document.getElementById('nav-container');
+            container.innerHTML = `<table class="history-table"><thead><tr><th>Plaza</th><th>Placa</th><th>Ingreso</th><th>Salida</th></tr></thead><tbody id="table-body"></tbody></table>`;
+            
+            const records = historyTree[year][month][day].sort((a,b) => {
+                return (b.exitTime || b.endTime || 0) - (a.exitTime || a.endTime || 0);
+            }); 
+            
+            const tbody = document.getElementById('table-body');
+            records.forEach(r => {
+                const inMs = r.entryTime || r.startTime || 0;
+                const outMs = r.exitTime || r.endTime || 0;
+                
+                const dIn = new Date(inMs);
+                const dOut = new Date(outMs);
+                
+                // ESCUDO FINAL: Si la hora no se puede calcular, saltamos y ocultamos esta fila
+                if (isNaN(dIn.getTime()) || isNaN(dOut.getTime())) {
+                    return; 
+                }
+
+                const inTime = dIn.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); 
+                const outTime = dOut.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                
+                tbody.innerHTML += `<tr><td>${r.slot || r.plaza}</td><td><strong>${r.plate || r.placa}</strong></td><td>${inTime}</td><td>${outTime}</td></tr>`;
+            });
+        }
+
+        const billingModal = document.getElementById('billingModal');
+        
+        function openBillingModal() {
+            renderBillingTable();
+            billingModal.style.display = "block";
+        }
+        
+        function closeBillingModal() {
+            billingModal.style.display = "none";
+        }
+
+        // Cerramos el modal si se hace clic fuera de él (agregar al window.onclick existente)
+        window.onclick = function(event) { 
+            if (event.target == assignModal) closeAssignModal(); 
+            if (event.target == searchModal) closeSearchModal(); 
+            if (event.target == fullHistoryModal) closeFullHistory(); 
+            if (event.target == ticketModal) closeTicketModal(); 
+            if (event.target == billingModal) closeBillingModal(); 
+        }
+
+    // --- LÓGICA DE CALENDARIZACIÓN ---
+        function getLocalYMD(dateObj) {
+            // Convierte una fecha a formato AAAA-MM-DD según la hora local (Perú)
+            return dateObj.getFullYear() + '-' + 
+                   String(dateObj.getMonth() + 1).padStart(2, '0') + '-' + 
+                   String(dateObj.getDate()).padStart(2, '0');
+        }
+
+        function setBillingFilter(type) {
+            const dateInput = document.getElementById('billing-date');
+            const today = new Date();
+            
+            if (type === 'today') {
+                dateInput.value = getLocalYMD(today);
+            } else if (type === 'yesterday') {
+                const yesterday = new Date(today);
+                yesterday.setDate(yesterday.getDate() - 1);
+                dateInput.value = getLocalYMD(yesterday);
+            } else if (type === 'all') {
+                dateInput.value = ''; // Vacío significa mostrar todo
+            }
+            renderBillingTable();
+        }
+
+        function openBillingModal() {
+            setBillingFilter('today'); // Al abrir, mostramos por defecto las ventas de HOY
+            billingModal.style.display = "block";
+        }
+
+        function renderBillingTable() {
+            const tbody = document.getElementById('billing-table-body');
+            tbody.innerHTML = "";
+            
+            if (fullHistoryData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#999; padding: 20px;">No hay boletas registradas</td></tr>`;
+                return;
+            }
+
+            // Leemos qué fecha quiere ver el operario
+            const filterDateStr = document.getElementById('billing-date').value; 
+            
+            const sortedData = [...fullHistoryData].sort((a,b) => {
+                return (b.exitTime || b.endTime || 0) - (a.exitTime || a.endTime || 0);
+            });
+
+            let displayedCount = 0;
+
+            sortedData.forEach(item => {
+                const outMs = item.exitTime || item.endTime || 0;
+                if (outMs === 0 || isNaN(new Date(outMs).getTime())) return;
+
+                const dateObj = new Date(outMs);
+                
+                // Filtramos por fecha seleccionada
+                if (filterDateStr) {
+                    const itemDateStr = getLocalYMD(dateObj);
+                    if (itemDateStr !== filterDateStr) return; 
+                } else {
+                    // Si seleccionó "Todos", mostramos máximo 50
+                    if (displayedCount >= 50) return; 
+                }
+
+                const exitStr = dateObj.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                const rawMonto = item.amountPaid || item.amount || item.cobro || 0;
+                const monto = parseFloat(rawMonto).toFixed(2);
+                const placa = item.plate || item.placa || 'Desconocido';
+                const plaza = item.slot || item.plaza || '--';
+
+                const printObj = { 
+                    plaza: plaza, 
+                    placa: placa, 
+                    minutos: Math.floor(((item.exitTime || item.endTime) - (item.entryTime || item.startTime)) / 60000), 
+                    monto: parseFloat(monto) 
+                };
+                
+                // FIX: Codificamos el objeto a un formato de texto 100% seguro para HTML
+                const safeData = encodeURIComponent(JSON.stringify(printObj));
+
+                // Insertamos solo la fila de la boleta
+                tbody.innerHTML += `
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="text-align: center; vertical-align: middle; padding: 12px 5px;"><strong>P${plaza}</strong></td>
+                        <td style="text-align: center; vertical-align: middle; padding: 12px 5px;">${placa}</td>
+                        <td style="text-align: center; vertical-align: middle; padding: 12px 5px;">${exitStr}</td>
+                        <td style="text-align: center; vertical-align: middle; color: #059669; font-weight: bold; padding: 12px 5px;">S/ ${monto}</td>
+                        <td style="text-align: center; vertical-align: middle; padding: 12px 5px;">
+                            <button class="btn-action" style="padding: 6px 12px; font-size: 13px; border-radius: 4px;" onclick="imprimirDesdeHistorial('${safeData}')">
+                                🖨️ Imprimir
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                
+                displayedCount++;
+            });
+
+            // Si no hay resultados para esa fecha
+            if (displayedCount === 0) {
+                 tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#999; padding: 30px;">No hay registros para la fecha seleccionada</td></tr>`;
+            }
+        }
+
+        // --- TRADUCTOR DE MINUTOS A HORAS ---
+        function formatMinutosAHras(totalMinutos) {
+            if (totalMinutos < 60) return `${totalMinutos} min`;
+            const h = Math.floor(totalMinutos / 60);
+            const m = totalMinutos % 60;
+            return m === 0 ? `${h} hr` : `${h} hr y ${m} min`;
+        }
+
+        function calculateTime(startTime) {
+            if (!startTime) return "..."; const now = Date.now(); const diff = now - startTime; if (diff < 0) return "0m";
+            const m = Math.floor((diff / 60000) % 60); const h = Math.floor((diff / 3600000) % 24); const d = Math.floor(diff / 86400000);
+            let str = ""; if (d > 0) str += `${d}d `; if (h > 0) str += `${h}h `; str += `${m}m`; return str;
+        }
+
+        function updateTimersView() { if (document.getElementById('slots-list')) renderSidebarList(); }
+        
+        // --- SESCUCHAR SENSORES Y COBROS AUTOMÁTICOS ---
+        function activarEscuchaCobros() {
+            database.ref('notificaciones_cobro').on('child_added', (snapshot) => {
+                const data = snapshot.val();
+                
+                // Solo mostramos la alerta si no ha sido leída
+                if (!data.leida) {
+                    // 1. Marcar como leída en Firebase para que no vuelva a salir
+                    database.ref(`notificaciones_cobro/${snapshot.key}`).update({ leida: true });
+
+                    // 2. Mostrar la alerta elegante al Operario
+                    Swal.fire({
+                        title: '🚗 ¡Vehículo Retirado!',
+                        html: `El sensor detectó la salida del vehículo <b>${data.placa}</b> de la Plaza <b>${data.plaza}</b>.<br><br>
+                               Tiempo transcurrido: <b>${data.minutos} minutos</b><br>
+                               Total a cobrar: <br><b style="font-size: 32px; color: #28a745;">S/ ${data.monto.toFixed(2)}</b>`,
+                        icon: 'success',
+                        showCancelButton: true,
+                        confirmButtonColor: '#0d6efd',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: '🖨️ Imprimir Boleta',
+                        cancelButtonText: 'Cerrar',
+                        allowOutsideClick: false // Obliga al operario a interactuar
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            imprimirBoleta(data);
+                        }
+                    });
+                }
+            });
+        }
+
+        // --- PUENTE SEGURO PARA IMPRIMIR DESDE LA TABLA ---
+        window.imprimirDesdeHistorial = function(safeDataStr) {
+            const dataObjeto = JSON.parse(decodeURIComponent(safeDataStr));
+            imprimirBoleta(dataObjeto);
+        };
+
+        // --- GENERADOR DE TICKET DE CAJA FÍSICA ---
+        function imprimirBoleta(data) {
+            const ventanaBoleta = window.open('', '_blank', 'width=400,height=600');
+            
+            // 1. Escribimos el diseño
+            ventanaBoleta.document.write(`
+                <html>
+                <head>
+                    <title>Boleta de Pago - P${data.plaza}</title>
+                    <style>
+                        body { font-family: 'Courier New', Courier, monospace; padding: 20px; text-align: center; color: #000; }
+                        .ticket { border: 1px dashed #000; padding: 20px; width: 300px; margin: 0 auto; background: #fff; }
+                        h2 { margin: 0 0 5px 0; font-size: 22px; }
+                        .divisor { border-bottom: 1px dashed #000; margin: 15px 0; }
+                        .detalle { text-align: left; margin-bottom: 8px; font-size: 15px; }
+                        .total { font-size: 22px; font-weight: bold; margin-top: 15px; text-align: right; }
+                        .fecha { font-size: 12px; margin-bottom: 15px; color: #555; }
+                    </style>
+                </head>
+                <body>
+                    <div class="ticket">
+                        <h2>ESTACIONAMIENTO<br>DON CARLOS</h2>
+                        <div class="fecha">RUC: 20123456789<br>Trujillo - La Libertad<br>Fecha: ${new Date().toLocaleDateString('es-PE')}</div>
+                        
+                        <div class="divisor"></div>
+                        
+                        <div class="detalle"><b>Placa Vehículo:</b> ${data.placa}</div>
+                        <div class="detalle"><b>Nro. Plaza:</b> ${data.plaza}</div>
+                        <div class="detalle"><b>Tiempo Total:</b> ${formatMinutosAHras(data.minutos)}</div>
+                        
+                        <div class="divisor"></div>
+                        
+                        <div class="detalle">Subtotal: S/ ${(data.monto / 1.18).toFixed(2)}</div>
+                        <div class="detalle">IGV (18%): S/ ${(data.monto - (data.monto / 1.18)).toFixed(2)}</div>
+                        <div class="total">TOTAL: S/ ${data.monto.toFixed(2)}</div>
+                        
+                        <div class="divisor"></div>
+                        <p style="font-size: 14px;">¡Gracias por su preferencia!</p>
+                    </div>
+                </body>
+                </html>
+            `);
+            
+            // 2. Cerramos el documento para obligar al navegador a renderizarlo
+            ventanaBoleta.document.close();
+            ventanaBoleta.focus();
+            
+            // 3. Le damos medio segundo (500ms) a la pantalla para dibujar las letras, 
+            // lanzamos la impresora, y al terminar, destruimos la ventana.
+            setTimeout(() => {
+                ventanaBoleta.print();
+                ventanaBoleta.close();
+            }, 500);
+        }
+    </script>
+</body>
+</html>
