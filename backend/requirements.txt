@@ -8,5 +8,4 @@ python-jose[cryptography]
 fpdf2
 python-multipart
 email-validator
-supabase==2.3.4
-httpx==0.27.2
+supabase
