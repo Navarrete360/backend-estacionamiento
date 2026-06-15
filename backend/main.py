@@ -478,8 +478,9 @@ async def generar_link_pago(req: PagoRequest):
                 "currency_id": "PEN",
                 "unit_price": total_monto
             }
-        ]
-        # Más adelante aquí agregaremos el Webhook de Make
+        ],
+        "external_reference": req.placa,  # <-- La placa viaja a Mercado Pago
+        "notification_url": "https://hook.us2.make.com/mxu8x9diobg5gtoy0tj4yne0iz5ie6c7" # <-- El aviso va a Make
     }
     
     try:
