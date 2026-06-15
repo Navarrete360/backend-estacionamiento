@@ -541,7 +541,7 @@ async def confirmar_pago(datos: PagoConfirmado):
         }
         
         # Ojo: Usamos el nombre exacto de la tabla que creaste en la imagen
-        supabase.table("pagos_Estacionamiento").insert(datos_pago).execute()
+        supabase.table("pagos_mercadopago").insert(datos_pago).execute()
 
         if plaza_encontrada:
             return {"mensaje": "Pago registrado en Firebase y Supabase exitosamente", "plaza": plaza_encontrada}

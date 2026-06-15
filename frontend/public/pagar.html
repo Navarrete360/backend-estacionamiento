@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagar Estacionamiento - Don Carlos</title>
+    <style>
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .mobile-card { background: white; width: 100%; max-width: 400px; padding: 30px 20px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; box-sizing: border-box; margin: 20px; }
+        .logo { width: 60px; height: 60px; background: #2563eb; color: white; font-size: 30px; display: inline-flex; justify-content: center; align-items: center; border-radius: 50%; margin-bottom: 10px; }
+        h2 { margin: 0; color: #1e293b; font-size: 22px; }
+        p.subtitle { color: #64748b; font-size: 14px; margin-top: 5px; }
+        .info-box { background: #f1f5f9; border-radius: 12px; padding: 15px; margin: 25px 0; text-align: left; }
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 15px; color: #334155; }
+        .info-row:last-child { margin-bottom: 0; border-top: 1px dashed #cbd5e1; padding-top: 10px; font-weight: bold; color: #0f172a; font-size: 18px; }
+        .btn-mp { background-color: #009ee3; color: white; font-weight: bold; font-size: 16px; border: none; padding: 15px; width: 100%; border-radius: 8px; cursor: pointer; transition: 0.3s; display: none; }
+        .btn-mp:hover { background-color: #0087c1; }
+        .loading { color: #64748b; font-size: 15px; font-weight: bold; margin: 20px 0; }
+    </style>
+</head>
+<body>
+
+    <div class="mobile-card">
+        <div class="logo">🚗</div>
+        <h2>Estacionamiento</h2>
+        <p class="subtitle">Don Carlos - Trujillo</p>
+
+        <div id="loading-state" class="loading">
+            ⏳ Consultando tarifa en la caseta...
+        </div>
+
+        <div id="ticket-info" class="info-box" style="display: none;">
+            <div class="info-row"><span>Placa:</span> <strong id="lbl-placa">---</strong></div>
+            <div class="info-row"><span>Plaza:</span> <strong id="lbl-plaza">---</strong></div>
+            <div class="info-row"><span>Tiempo:</span> <strong id="lbl-tiempo">---</strong></div>
+            <div class="info-row"><span>Total a pagar:</span> <strong style="color: #059669;" id="lbl-monto">---</strong></div>
+        </div>
+
+        <button id="btn-pagar" class="btn-mp" onclick="irAMercadoPago()">💳 Pagar con Mercado Pago</button>
+        <div id="error-msg" style="color: #dc2626; display: none; margin-top: 20px; font-weight: bold;"></div>
+    </div>
+
+    <script>
+        // 1. Extraer la placa de la URL (Ej: pagar.html?placa=KAD-310)
+        const urlParams = new URLSearchParams(window.location.search);
+        const placa = urlParams.get('placa');
+        
+        // El enlace a Mercado Pago que nos devolverá el backend
+        let linkMercadoPago = "";
+        
+        // 🔑 REEMPLAZA ESTO CON LA URL DE TU BACKEND EN VERCEL
+        const BACKEND_URL = "https://backend-estacionamiento.vercel.app";
+
+        window.onload = async () => {
+            if (!placa) {
+                mostrarError("No se detectó ninguna placa en el código QR.");
+                return;
+            }
+
+            try {
+                // 2. Le preguntamos al nuevo Cajero Virtual (Fase 1) cuánto debe el auto
+                const response = await fetch(`${BACKEND_URL}/api/pago/generar-link`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ placa: placa })
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.detail || "Error al consultar la tarifa.");
+                }
+
+                const datosCobro = await response.json();
+                
+                // 3. Ocultamos el 'Cargando' y mostramos los datos reales
+                document.getElementById('loading-state').style.display = "none";
+                document.getElementById('ticket-info').style.display = "block";
+                document.getElementById('btn-pagar').style.display = "block";
+
+                // 4. Llenamos el recibo visual
+                document.getElementById('lbl-placa').innerText = datosCobro.placa;
+                document.getElementById('lbl-plaza').innerText = "P" + datosCobro.plaza;
+                
+                // Formatear minutos a horas
+                let mins = datosCobro.minutos_consumidos;
+                let textoTiempo = mins < 60 ? `${mins} min` : `${Math.floor(mins/60)} hr y ${mins%60} min`;
+                document.getElementById('lbl-tiempo').innerText = textoTiempo;
+                
+                document.getElementById('lbl-monto').innerText = `S/ ${datosCobro.monto_total.toFixed(2)}`;
+
+                // Guardamos el link oficial de Mercado Pago
+                linkMercadoPago = datosCobro.init_point;
+
+            } catch (error) {
+                mostrarError(error.message);
+            }
+        };
+
+        function mostrarError(msg) {
+            document.getElementById('loading-state').style.display = "none";
+            document.getElementById('error-msg').innerText = "⚠️ " + msg;
+            document.getElementById('error-msg').style.display = "block";
+        }
+
+        function irAMercadoPago() {
+            // 5. Redireccionar al conductor a la pasarela azul
+            document.getElementById('btn-pagar').innerText = "Cargando pasarela...";
+            window.location.href = linkMercadoPago;
+        }
+    </script>
+</body>
+</html>

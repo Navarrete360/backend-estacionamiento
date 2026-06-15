@@ -32,6 +32,7 @@
 
                 <button class="btn-assign" onclick="openAssignModal()">+ Asignar Placa a Plaza</button>
                 <button class="btn-assign" style="background-color: #10b981; margin-top: 10px;" onclick="openBillingModal()">🖨️ Centro de Boletas</button>
+                <button class="btn-assign" style="background-color: #f59e0b; margin-top: 10px;" onclick="openActiveTicketsModal()">🎟️ Centro de Tickets</button>    
                 <h3 style="margin-bottom: 10px; font-size: 0.9rem; border-bottom: 2px solid #eee; padding-bottom: 5px; flex-shrink: 0;">Estado de Plazas</h3>
                 <div class="scroll-list">
                     <ul class="list-unstyled" id="slots-list">
@@ -224,22 +225,34 @@
     </div>
 
     <div id="ticketModal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeTicketModal()">&times;</span>
-            <div id="ticket-print-area" class="ticket-preview">
-                <h3>ESTACIONAMIENTO<br>DON CARLOS</h3>
-                <p>RUC: 20123456789</p>
-                <div class="ticket-divider"></div>
-                <p><strong>TICKET DE INGRESO</strong></p>
-                <div class="ticket-big" id="tk-placa">ABC-123</div>
-                <p>PLAZA ASIGNADA: <strong id="tk-plaza" style="font-size: 1.2rem;">15</strong></p>
-                <div class="ticket-divider"></div>
-                <p style="text-align: left;"><strong>FECHA:</strong> <span id="tk-fecha"></span></p>
-                <p style="text-align: left;"><strong>HORA:</strong> <span id="tk-hora"></span></p>
-                <div class="ticket-divider"></div>
-                <p><small>Conserve este ticket.<br>Tarifa: S/ 5.00 por hora o fracción.</small></p>
+        <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; padding: 15px; max-height: 90vh; overflow-y: auto; border-radius: 12px; width: auto; min-width: 300px;">
+            <span class="close-modal" onclick="closeTicketModal()" style="align-self: flex-end; margin-bottom: -20px; z-index: 10;">&times;</span>
+            
+            <div id="ticket-print-area" class="ticket-preview" style="text-align: center; margin: 0 auto; max-width: 280px; width: 100%; font-size: 0.85rem; line-height: 1.2;">
+                <h3 style="margin: 5px 0; font-size: 1.1rem;">ESTACIONAMIENTO<br>DON CARLOS</h3>
+                <p style="margin: 2px 0;">RUC: 20123456789</p>
+                <div class="ticket-divider" style="margin: 6px 0; border-top: 1px dashed #000;"></div>
+                
+                <p style="margin: 4px 0;"><strong>TICKET DE INGRESO</strong></p>
+                <div class="ticket-big" id="tk-placa" style="font-size: 1.5rem; font-weight: bold; margin: 4px 0;">ABC-123</div>
+                <p style="margin: 4px 0;">PLAZA ASIGNADA: <strong id="tk-plaza" style="font-size: 1.2rem;">15</strong></p>
+                <div class="ticket-divider" style="margin: 6px 0; border-top: 1px dashed #000;"></div>
+                
+                <div id="tk-qrcode" style="display: flex; justify-content: center; margin: 8px 0;"></div>
+                <p style="font-size: 11px; margin: 0; color: #555;">Escanea para pagar</p>
+                
+                <div class="ticket-divider" style="margin: 6px 0; border-top: 1px dashed #000;"></div>
+                <p style="text-align: center; margin: 3px 0;"><strong>FECHA:</strong> <span id="tk-fecha"></span></p>
+                <p style="text-align: center; margin: 3px 0;"><strong>HORA:</strong> <span id="tk-hora"></span></p>
+                <div class="ticket-divider" style="margin: 6px 0; border-top: 1px dashed #000;"></div>
+                
+                <p style="margin: 3px 0;"><small>Conserve este ticket.<br>Tarifa: S/ 5.00 por hora o fracción.</small></p>
+                <p style="font-size: 0.8rem; font-weight: bold; margin-top: 6px; margin-bottom: 0; text-align: center; color: #1e293b;">
+                    *Por favor pague su ticket al<br>regresar a su carro para salir.*
+                </p>
             </div>
-            <button class="btn-action" style="margin-top: 15px;" onclick="window.print()">🖨️ Imprimir Ticket</button>
+            
+            <button class="btn-action" style="margin-top: 12px; max-width: 200px; padding: 8px;" onclick="imprimirTicketFisico()">🖨️ Imprimir Ticket</button>
         </div>
     </div>
 
@@ -256,6 +269,33 @@
                 <input type="date" id="search-date" class="form-control">
             </div>
             <button class="btn-search-action" onclick="filterHistory()">🔍 Buscar</button>
+        </div>
+    </div>
+
+    <div id="activeTicketsModal" class="modal" style="z-index: 9998;">
+        <div class="modal-content" style="background: #ffffff; border-radius: 12px; box-shadow: 0px 10px 30px rgba(0,0,0,0.5); max-width: 800px; width: 90%; max-height: 85vh; margin: 5vh auto; display: flex; flex-direction: column; padding: 25px; box-sizing: border-box; position: relative;">
+            
+            <span class="close-modal" onclick="closeActiveTicketsModal()">&times;</span>
+            
+            <div style="flex-shrink: 0;">
+                <h2 style="margin-top: 0; margin-bottom: 5px; text-align: center; color: #333;">Centro de Tickets Activos</h2>
+                <p style="text-align: center; color: #666; margin-bottom: 20px;">Vehículos actualmente estacionados (impresión de tickets de ingreso).</p>
+            </div>
+
+            <div style="overflow-y: auto; flex-grow: 1; border-top: 1px solid #e2e8f0; padding-top: 10px;">
+                <table class="history-table" style="width: 100%; margin: 0; border-collapse: collapse;">
+                    <thead style="position: sticky; top: 0; background: #fff; z-index: 1; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <tr>
+                            <th style="padding: 10px; border-bottom: 2px solid #ddd; color: #333;">Plaza</th>
+                            <th style="padding: 10px; border-bottom: 2px solid #ddd; color: #333;">Placa</th>
+                            <th style="padding: 10px; border-bottom: 2px solid #ddd; color: #333;">Hora de Ingreso</th>
+                            <th style="padding: 10px; border-bottom: 2px solid #ddd; color: #333;">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="active-tickets-body">
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -318,6 +358,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyB65kW5p7JZqhu2M2KiTSpKrz_CsguANnE",
@@ -717,6 +758,19 @@
                 document.getElementById('tk-plaza').innerText = slotId;
                 document.getElementById('tk-fecha').innerText = dateObj.toLocaleDateString('es-PE'); 
                 document.getElementById('tk-hora').innerText = dateObj.toLocaleTimeString('es-PE', {hour: '2-digit', minute: '2-digit'});
+                // --- NUEVO: GENERAR CÓDIGO QR ---
+                document.getElementById('tk-qrcode').innerHTML = ""; // Limpia el QR anterior
+                // Obtiene la ruta actual de tu web y le añade pagar.html
+                const urlDePago = window.location.origin + "/pagar.html?placa=" + plate;
+                
+                new QRCode(document.getElementById("tk-qrcode"), {
+                    text: urlDePago,
+                    width: 100,      
+                    height: 100,     
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H
+                });
                 ticketModal.style.display = "block";
 
             } catch (error) {
@@ -738,18 +792,25 @@
             for (let i = 1; i <= 46; i++) {
                 const li = document.createElement('li'); li.className = "sidebar-item";
                 const assignment = assignmentsData[i] || assignmentsData[i.toString()];
+                
                 if (assignment) {
-                    // NUEVO: Si está esperando que llegue el auto
                     if (assignment.startTime === 0) {
                         li.innerHTML = `<div style="display:flex;flex-direction:column;"><div><strong style="color:#2563eb;">Plaza ${i}</strong> <span class="plate-display">${assignment.plate}</span></div><span class="timer-display" style="color:#d97706; font-weight:bold;">⏳ Esperando que estacione...</span></div>`;
-                        } else {
+                    } else {
                         const diffMs = Date.now() - assignment.startTime; 
                         const diffMinutes = Math.floor(diffMs / 60000); 
-                        
                         let hours = Math.ceil(diffMinutes / 60);
                         if (hours === 0) hours = 1; 
-                                                
-                        li.innerHTML = `<div style="display:flex;flex-direction:column;"><div><strong style="color:#2563eb;">Plaza ${i}</strong> <span class="plate-display">${assignment.plate}</span></div><span class="timer-display">⏱ ${calculateTime(assignment.startTime)} | <b style="color:#059669;">S/ ${(hours * 5).toFixed(2)}</b></span></div>`;
+                        
+                        // --- NUEVA LÓGICA VISUAL DE PAGO ---
+                        let statusHtml = `<b style="color:#059669;">S/ ${(hours * 5).toFixed(2)}</b>`;
+                        
+                        if (assignment.pagado) {
+                            // Si Firebase dice que ya pagó por QR, mostramos la etiqueta verde
+                            statusHtml = `<b style="color:#10b981; background-color:#dcfce7; padding:2px 8px; border-radius:12px; font-size:0.8rem; border: 1px solid #10b981;">✅ PAGADO</b>`;
+                        }
+                        
+                        li.innerHTML = `<div style="display:flex;flex-direction:column;"><div><strong style="color:#2563eb;">Plaza ${i}</strong> <span class="plate-display">${assignment.plate}</span></div><span class="timer-display">⏱ ${calculateTime(assignment.startTime)} | ${statusHtml}</span></div>`;
                     }
                 } else {
                     li.innerHTML = `<div style="color:#999;">Plaza ${i} <small>(Sin placa)</small></div>`;
@@ -1187,6 +1248,153 @@
             setTimeout(() => {
                 ventanaBoleta.print();
                 ventanaBoleta.close();
+            }, 500);
+        }
+
+        // ==========================================
+        // LÓGICA DEL CENTRO DE TICKETS ACTIVOS
+        // ==========================================
+        const activeTicketsModal = document.getElementById('activeTicketsModal');
+
+        function closeActiveTicketsModal() {
+            activeTicketsModal.style.display = "none";
+        }
+
+        function openActiveTicketsModal() {
+            renderActiveTicketsTable(); // Ahora solo carga la tabla directo
+            activeTicketsModal.style.display = "block";
+        }
+
+        function renderActiveTicketsTable() {
+            const tbody = document.getElementById('active-tickets-body');
+            tbody.innerHTML = "";
+            let count = 0;
+
+            // Recorremos las plazas para ver quién está adentro
+            for (let i = 1; i <= 46; i++) {
+                const data = assignmentsData[i] || assignmentsData[i.toString()];
+                
+                if (data && data.startTime > 0) { 
+                    count++;
+                    const dateObj = new Date(data.startTime);
+                    const timeStr = dateObj.toLocaleTimeString('es-PE', {hour:'2-digit', minute:'2-digit'});
+                    const dateStr = dateObj.toLocaleDateString('es-PE');
+                    
+                    tbody.innerHTML += `
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="text-align: center; vertical-align: middle; padding: 12px 5px;"><strong>P${i}</strong></td>
+                            <td style="text-align: center; vertical-align: middle; padding: 12px 5px;">${data.plate}</td>
+                            <td style="text-align: center; vertical-align: middle; padding: 12px 5px;">${dateStr} ${timeStr}</td>
+                            <td style="text-align: center; vertical-align: middle; padding: 12px 5px;">
+                                <button class="btn-action" style="background-color: #f59e0b; padding: 6px 12px; font-size: 13px; border-radius: 4px;" onclick="reimprimirTicket(${i})">
+                                    🎟️ Imprimir
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }
+            }
+
+            if (count === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#999; padding: 30px;">No hay vehículos estacionados actualmente</td></tr>`;
+            }
+        }
+
+        function reimprimirTicket(slotId) {
+            const data = assignmentsData[slotId] || assignmentsData[slotId.toString()];
+            if (!data) return;
+            
+            const dateObj = new Date(data.startTime);
+            const plate = data.plate;
+            
+            // Llenamos el modal del ticket original
+            document.getElementById('tk-placa').innerText = plate; 
+            document.getElementById('tk-plaza').innerText = slotId;
+            document.getElementById('tk-fecha').innerText = dateObj.toLocaleDateString('es-PE'); 
+            document.getElementById('tk-hora').innerText = dateObj.toLocaleTimeString('es-PE', {hour: '2-digit', minute: '2-digit'});
+            
+            // Generamos el QR de nuevo
+            const qrContainer = document.getElementById('tk-qrcode');
+            if (qrContainer) {
+                qrContainer.innerHTML = ""; 
+                const urlDePago = window.location.origin + "/pagar.html?placa=" + plate;
+                new QRCode(qrContainer, {
+                    text: urlDePago,
+                    width: 130, height: 130, colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H
+                });
+            }
+
+            // Cambiamos de ventana
+            closeActiveTicketsModal(); 
+            ticketModal.style.display = "block"; 
+        }
+
+        // Asegurarnos de que el modal se cierre al hacer clic afuera
+        // (Agrega esta línea donde tienes el window.onclick)
+        const oldWindowOnClick = window.onclick;
+        window.onclick = function(event) { 
+            if (oldWindowOnClick) oldWindowOnClick(event);
+            if (event.target == activeTicketsModal) closeActiveTicketsModal(); 
+        };
+
+        // --- GENERADOR DE TICKET DE INGRESO FÍSICO ---
+        function imprimirTicketFisico() {
+            // Extraemos el QR (ya sea que la librería haya generado un canvas o una imagen)
+            let qrContainer = document.getElementById('tk-qrcode');
+            let canvas = qrContainer.querySelector('canvas');
+            let img = qrContainer.querySelector('img');
+            
+            let qrDataUrl = "";
+            if (canvas) {
+                qrDataUrl = canvas.toDataURL("image/png");
+            } else if (img) {
+                qrDataUrl = img.src;
+            }
+
+            const ventanaPrint = window.open('', '_blank', 'width=400,height=600');
+            
+            ventanaPrint.document.write(`
+                <html>
+                <head>
+                    <title>Ticket de Ingreso</title>
+                    <style>
+                        body { font-family: 'Courier New', Courier, monospace; text-align: center; margin: 0; padding: 20px; color: #000; }
+                        h3 { font-size: 1.2rem; margin: 5px 0; }
+                        p { margin: 5px 0; font-size: 0.9rem; }
+                        .divider { border-top: 1px dashed #000; margin: 10px 0; }
+                        .ticket-big { font-size: 1.5rem; font-weight: bold; margin: 5px 0; }
+                    </style>
+                </head>
+                <body>
+                    <h3>ESTACIONAMIENTO<br>DON CARLOS</h3>
+                    <p>RUC: 20123456789</p>
+                    <div class="divider"></div>
+                    <p><strong>TICKET DE INGRESO</strong></p>
+                    <div class="ticket-big">${document.getElementById('tk-placa').innerText}</div>
+                    <p>PLAZA ASIGNADA: <strong>${document.getElementById('tk-plaza').innerText}</strong></p>
+                    <div class="divider"></div>
+                    
+                    <img src="${qrDataUrl}" style="width: 100px; height: 100px; margin: 10px 0;">
+                    <p style="font-size: 11px; margin: 0; color: #555;">Escanea para pagar</p>
+                    
+                    <div class="divider"></div>
+                    <p><strong>FECHA:</strong> ${document.getElementById('tk-fecha').innerText}</p>
+                    <p><strong>HORA:</strong> ${document.getElementById('tk-hora').innerText}</p>
+                    <div class="divider"></div>
+                    <p><small>Conserve este ticket.<br>Tarifa: S/ 5.00 por hora o fracción.</small></p>
+                    <p style="font-size: 0.8rem; font-weight: bold; margin-top: 10px;">
+                        *Por favor pague su ticket al<br>regresar a su carro para salir.*
+                    </p>
+                </body>
+                </html>
+            `);
+            
+            ventanaPrint.document.close();
+            ventanaPrint.focus();
+            
+            setTimeout(() => {
+                ventanaPrint.print();
+                ventanaPrint.close();
             }, 500);
         }
     </script>
