@@ -17,8 +17,8 @@ import io
 import urllib.request
 
 # --- INICIALIZACIÓN DE SUPABASE ---
-supabase_url = os.environ.get("https://yucotffxddiwryolyinj.supabase.co/rest/v1/")
-supabase_key = os.environ.get("sb_publishable_2td3ZiVDS8JPVApKjzARjA_kI9zsddV")
+supabase_url = "https://yucotffxddiwryolyinj.supabase.co/rest/v1/"
+supabase_key = "sb_publishable_2td3ZiVDS8JPVApKjzARjA_kI9zsddV"
 
 if not supabase_url or not supabase_key:
     raise ValueError("Faltan las credenciales de Supabase en Vercel")
