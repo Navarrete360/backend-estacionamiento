@@ -17,11 +17,8 @@ import io
 import urllib.request
 
 # --- INICIALIZACIÓN DE SUPABASE ---
-supabase_url = "https://yucotffxddiwryolyinj.supabase.co/rest/v1/"
+supabase_url = "https://yucotffxddiwryolyinj.supabase.co"
 supabase_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl1Y290ZmZ4ZGRpd3J5b2x5aW5qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0OTY4OTksImV4cCI6MjA5NjA3Mjg5OX0.oQuFbDf236Woa0-cJ9zuNGoChTSAU5g4g7dgCQ3IPtk"
-
-if not supabase_url or not supabase_key:
-    raise ValueError("Faltan las credenciales de Supabase en Vercel")
 
 supabase: Client = create_client(supabase_url, supabase_key)
 
