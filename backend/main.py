@@ -509,3 +509,31 @@ async def generar_link_pago(req: PagoRequest):
             
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al conectar con Mercado Pago: {str(e)}")
+    # --- NUEVO MODELO DE DATOS ---
+class PagoConfirmado(BaseModel):
+    placa: str
+
+# --- NUEVO ENDPOINT: RECIBIR CONFIRMACIÓN DE MAKE ---
+@app.post("/api/pago/confirmar")
+async def confirmar_pago(datos: PagoConfirmado):
+    try:
+        # 1. Buscamos todas las plazas ocupadas en Firebase
+        ref = db.reference('assignments')
+        plazas = ref.get()
+        
+        if plazas:
+            # 2. Buscamos en qué plaza está estacionada esta placa
+            for slot_id, info in plazas.items():
+                if info.get('plate') == datos.placa:
+                    
+                    # 3. ¡Auto encontrado! Le ponemos la etiqueta de pagado
+                    ref.child(slot_id).update({
+                        "pagado": True,
+                        "metodo_pago": "MercadoPago"
+                    })
+                    return {"mensaje": "Pago registrado exitosamente", "plaza": slot_id}
+                    
+        return {"mensaje": "Placa no encontrada en el estacionamiento"}
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
