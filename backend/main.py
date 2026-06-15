@@ -14,6 +14,7 @@ from fastapi.responses import StreamingResponse
 from fpdf import FPDF
 from datetime import datetime
 import io
+import urllib.request
 
 # --- INICIALIZACIÓN DE SUPABASE ---
 supabase_url = os.environ.get("SUPABASE_URL")
@@ -424,3 +425,86 @@ async def update_sensor(data: SensorData):
 
     return {"mensaje": f"Proceso unificado: Plaza {data.plaza} procesada correctamente."}
 
+# --- ESTRUCTURA PARA SOLICITAR EL PAGO ---
+class PagoRequest(BaseModel):
+    placa: str
+
+# --- NUEVO ENDPOINT: CAJERO VIRTUAL PARA EL CONDUCTOR ---
+@app.post("/api/pago/generar-link")
+async def generar_link_pago(req: PagoRequest):
+    # 1. Buscar el vehículo en Firebase usando la placa
+    assignments_ref = db.reference('assignments').get()
+    
+    if not assignments_ref:
+        raise HTTPException(status_code=404, detail="No hay vehículos estacionados actualmente.")
+    
+    vehiculo_encontrado = None
+    plaza_ocupada = None
+    
+    for plaza, data in assignments_ref.items():
+        if data.get("plate") == req.placa:
+            vehiculo_encontrado = data
+            plaza_ocupada = plaza
+            break
+            
+    if not vehiculo_encontrado:
+        raise HTTPException(status_code=404, detail="Vehículo no encontrado en el estacionamiento.")
+        
+    # 2. Calcular el tiempo y la tarifa
+    start_time_ms = vehiculo_encontrado.get("startTime", 0)
+    end_time_ms = int(time.time() * 1000)
+    
+    if start_time_ms == 0:
+        raise HTTPException(status_code=400, detail="El vehículo tiene una reserva pero aún no ha ingresado.")
+        
+    diff_minutes = math.floor((end_time_ms - start_time_ms) / 60000)
+    if diff_minutes < 0: diff_minutes = 0
+    
+    # Redondeo por hora a S/ 5.00
+    hours = math.ceil(diff_minutes / 60)
+    if hours == 0: hours = 1 
+    total_monto = float(hours * 5.00)
+    
+    # 3. Solicitar el Link a Mercado Pago
+    # 🔑 REEMPLAZA ESTO CON TU TOKEN DE PRUEBA REAL
+    mp_token = os.environ.get("MP_ACCESS_TOKEN", "APP_USR-7782735169977074-061501-64408d49affd44a08ebca8d96aa3d565-3466638791")
+    url_mp = "https://api.mercadopago.com/checkout/preferences"
+    
+    payload = {
+        "items": [
+            {
+                "title": f"Ticket Estacionamiento Don Carlos - Placa: {req.placa}",
+                "quantity": 1,
+                "currency_id": "PEN",
+                "unit_price": total_monto
+            }
+        ]
+        # Más adelante aquí agregaremos el Webhook de Make
+    }
+    
+    try:
+        req_mp = urllib.request.Request(
+            url_mp, 
+            data=json.dumps(payload).encode('utf-8'), 
+            headers={
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {mp_token}'
+            },
+            method='POST'
+        )
+        
+        with urllib.request.urlopen(req_mp, timeout=10) as response:
+            res_body = response.read()
+            mp_data = json.loads(res_body.decode('utf-8'))
+            
+            # 4. Devolvemos la "boleta virtual" al celular del cliente
+            return {
+                "placa": req.placa,
+                "plaza": plaza_ocupada,
+                "minutos_consumidos": diff_minutes,
+                "monto_total": total_monto,
+                "init_point": mp_data.get("init_point") # ¡El link de pago!
+            }
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al conectar con Mercado Pago: {str(e)}")
