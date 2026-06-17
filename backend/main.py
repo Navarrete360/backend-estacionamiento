@@ -511,27 +511,28 @@ class PagoConfirmado(BaseModel):
     placa: str
 
 # --- NUEVO ENDPOINT: RECIBIR CONFIRMACIÓN 
+# --- NUEVO ENDPOINT: RECIBIR CONFIRMACIÓN (ACTUALIZADO CON RELACIÓN) ---
 @app.post("/api/pago/confirmar")
 async def confirmar_pago(datos: PagoConfirmado):
     try:
-        # 1. Buscamos todas las plazas ocupadas en Firebase
         ref = db.reference('assignments')
         plazas = ref.get()
         plaza_encontrada = None
+        ticket_id_encontrado = None  # <--- NUEVA VARIABLE
         
         if plazas:
             for slot_id, info in plazas.items():
                 if info.get('plate') == datos.placa:
                     plaza_encontrada = slot_id
+                    ticket_id_encontrado = info.get('ticket_id') # <--- RESCATAMOS EL ID DEL TICKET
                     
-                    # 2. Le ponemos la etiqueta de pagado en Firebase
                     ref.child(slot_id).update({
                         "pagado": True,
                         "metodo_pago": "MercadoPago"
                     })
-                    break # Detenemos el bucle al encontrar el auto
+                    break 
                     
-        # 3. Guardamos el registro financiero en Supabase (Se guarda haya o no plaza para no perder el dinero)
+        # Añadimos el id_ticket al paquete de datos
         datos_pago = {
             "placa": datos.placa,
             "plaza": plaza_encontrada if plaza_encontrada else "Desconocida",
@@ -540,13 +541,16 @@ async def confirmar_pago(datos: PagoConfirmado):
             "estado": "Completado"
         }
         
-        # Ojo: Usamos el nombre exacto de la tabla que creaste en la imagen
+        # Solo lo agregamos si realmente encontramos el ticket
+        if ticket_id_encontrado:
+            datos_pago["id_ticket"] = ticket_id_encontrado
+        
         supabase.table("pagos_mercadopago").insert(datos_pago).execute()
 
         if plaza_encontrada:
             return {"mensaje": "Pago registrado en Firebase y Supabase exitosamente", "plaza": plaza_encontrada}
         else:
-            return {"mensaje": "Pago guardado en Supabase, pero la placa no estaba en Firebase"}
+            return {"mensaje": "Pago guardado, pero la placa no estaba en Firebase"}
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
