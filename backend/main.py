@@ -510,7 +510,6 @@ async def generar_link_pago(req: PagoRequest):
 class PagoConfirmado(BaseModel):
     placa: str
 
-# --- NUEVO ENDPOINT: RECIBIR CONFIRMACIÓN 
 # --- NUEVO ENDPOINT: RECIBIR CONFIRMACIÓN (ACTUALIZADO CON RELACIÓN) ---
 @app.post("/api/pago/confirmar")
 async def confirmar_pago(datos: PagoConfirmado):
@@ -518,13 +517,26 @@ async def confirmar_pago(datos: PagoConfirmado):
         ref = db.reference('assignments')
         plazas = ref.get()
         plaza_encontrada = None
-        ticket_id_encontrado = None  # <--- NUEVA VARIABLE
+        ticket_id_encontrado = None
+        monto_calculado = 5.00 # Valor por defecto
         
         if plazas:
             for slot_id, info in plazas.items():
                 if info.get('plate') == datos.placa:
                     plaza_encontrada = slot_id
-                    ticket_id_encontrado = info.get('ticket_id') # <--- RESCATAMOS EL ID DEL TICKET
+                    ticket_id_encontrado = info.get('ticket_id')
+                    
+                    # --- CÁLCULO DINÁMICO DEL TIEMPO Y MONTO ---
+                    start_time_ms = info.get("startTime", 0)
+                    if start_time_ms > 0:
+                        end_time_ms = int(time.time() * 1000)
+                        diff_minutes = math.floor((end_time_ms - start_time_ms) / 60000)
+                        if diff_minutes < 0: diff_minutes = 0
+                        
+                        # Nivelamos la tarifa a S/ 5.00 por hora o fracción
+                        hours = math.ceil(diff_minutes / 60)
+                        if hours == 0: hours = 1 
+                        monto_calculado = float(hours * 5.00)
                     
                     ref.child(slot_id).update({
                         "pagado": True,
@@ -532,23 +544,22 @@ async def confirmar_pago(datos: PagoConfirmado):
                     })
                     break 
                     
-        # Añadimos el id_ticket al paquete de datos
+        # Añadimos el id_ticket y el MONTO DINÁMICO al paquete de datos
         datos_pago = {
             "placa": datos.placa,
             "plaza": plaza_encontrada if plaza_encontrada else "Desconocida",
-            "monto": 5.00,
+            "monto": monto_calculado, # <--- AHORA CALCULA EL MONTO REAL
             "metodo_pago": "Mercado Pago (QR)",
             "estado": "Completado"
         }
         
-        # Solo lo agregamos si realmente encontramos el ticket
         if ticket_id_encontrado:
             datos_pago["id_ticket"] = ticket_id_encontrado
         
         supabase.table("pagos_mercadopago").insert(datos_pago).execute()
 
         if plaza_encontrada:
-            return {"mensaje": "Pago registrado en Firebase y Supabase exitosamente", "plaza": plaza_encontrada}
+            return {"mensaje": "Pago registrado exitosamente", "plaza": plaza_encontrada}
         else:
             return {"mensaje": "Pago guardado, pero la placa no estaba en Firebase"}
     
