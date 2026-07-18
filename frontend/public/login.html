@@ -3,43 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acceso - Car Parking IoT</title>
+    <title>Acceso - Estacionamiento Don Carlos</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 
         body {
             font-family: 'Roboto', sans-serif;
-            background-color: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
             margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            background-color: #f8fafc;
+            overflow: hidden;
         }
 
-        .container {
-            background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        /* --- Contenedor Split Screen --- */
+        .split-layout {
+            display: flex;
             width: 100%;
-            max-width: 400px;
+            height: 100%;
+        }
+
+        /* --- Lado Izquierdo: Imagen Transparente/Oscurecida --- */
+        .image-side {
+            flex: 6; /* Ocupa el 60% de la pantalla */
+            /* Los espacios se reemplazan por %20 para evitar errores de lectura */
+            background: linear-gradient(rgba(15, 23, 42, 0.65), rgba(15, 23, 42, 0.85)), url('Estacionamiento%20don%20carlos.jpg');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
             text-align: center;
+            padding: 3rem;
             position: relative;
         }
 
-        h2 { color: #333; margin-bottom: 20px; }
+        .image-side h1 {
+            font-size: 3rem; 
+            margin: 0;
+            padding: 0 20px;
+            font-weight: 700;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            line-height: 1.2;
+        }
+
+        .image-side p {
+            font-size: 1.25rem;
+            opacity: 0.9;
+            max-width: 600px;
+            line-height: 1.6;
+            font-weight: 400;
+        }
+
+        .system-badge {
+            position: absolute;
+            top: 30px;
+            left: 40px;
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-transform: uppercase;
+        }
+
+        /* --- Lado Derecho: Formulario --- */
+        .form-side {
+            flex: 4; 
+            background: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 3rem;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        .form-container {
+            width: 100%;
+            max-width: 480px;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .brand-logo {
+            width: 65px;
+            height: 65px;
+            background-color: #eff6ff;
+            color: #2563eb;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-container h2 {
+            color: #0f172a;
+            font-size: 2.8rem;
+            margin-top: 0;
+            margin-bottom: 12px;
+        }
+
+        .form-container p.subtitle {
+            color: #64748b;
+            margin-bottom: 40px;
+            font-size: 1.15rem;
+        }
 
         .input-group {
-            margin-bottom: 15px;
+            margin-bottom: 25px;
             text-align: left;
         }
 
         label {
             display: block;
-            margin-bottom: 5px;
-            color: #666;
-            font-size: 0.9rem;
+            margin-bottom: 10px;
+            color: #475569;
+            font-size: 1.1rem;
+            font-weight: 600;
         }
 
         .password-wrapper {
@@ -49,95 +138,150 @@
 
         input {
             width: 100%;
-            padding: 12px;
-            padding-right: 40px; 
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 1rem;
-            box-sizing: border-box; 
+            padding: 18px 20px; 
+            padding-right: 50px; 
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1.2rem; 
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+            background-color: #f8fafc;
+            color: #1e293b;
         }
 
+        input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background-color: white;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        /* Icono del Ojito */
         .toggle-password {
             position: absolute;
-            right: 10px;
+            right: 14px;
             top: 50%;
             transform: translateY(-50%);
             cursor: pointer;
-            width: 20px;
-            height: 20px;
-            opacity: 0.6;
-            transition: opacity 0.2s;
-            display: flex; align-items: center; justify-content: center;
+            width: 24px;
+            height: 24px;
+            color: #94a3b8;
+            transition: color 0.2s;
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
         }
-        .toggle-password:hover { opacity: 1; }
+
+        .toggle-password:hover { color: #3b82f6; }
 
         .btn-primary {
             width: 100%;
-            padding: 12px;
+            padding: 18px; 
             background-color: #2563eb;
             color: white;
             border: none;
-            border-radius: 6px;
-            font-size: 1rem;
-            font-weight: bold;
+            border-radius: 12px;
+            font-size: 1.25rem; 
+            font-weight: 700;
             cursor: pointer;
-            margin-top: 10px;
-            transition: background 0.3s;
+            margin-top: 20px;
+            transition: all 0.3s;
         }
-        .btn-primary:hover { background-color: #1d4ed8; }
 
-        .btn-secondary {
-            width: 100%;
-            padding: 12px;
-            background-color: transparent;
-            color: #4b5563;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
-            transition: background 0.2s;
+        .btn-primary:hover { 
+            background-color: #1d4ed8; 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(37, 99, 235, 0.3);
         }
-        .btn-secondary:hover { background-color: #f3f4f6; }
 
-        .form-section { display: none; animation: fadeIn 0.3s; }
-        .form-section.active { display: block; }
+        .btn-primary:active {
+            transform: translateY(0);
+        }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(20px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
 
-        .eye-icon { width: 20px; height: 20px; }
+        /* --- Modo Responsivo para celulares --- */
+        @media (max-width: 900px) {
+            .image-side { display: none; } /* Oculta la foto en móviles */
+            .form-side { flex: 1; padding: 2rem; }
+            .form-container { max-width: 100%; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <div id="login-box" class="form-section active">
-            <h2>Iniciar Sesión</h2>
-            
-            <div class="input-group">
-                <label>Email</label>
-                <input type="email" id="login-email" placeholder="ejemplo@correo.com">
-            </div>
+    <div class="split-layout">
+        
+        <!-- LADO IZQUIERDO (IMAGEN Y BRANDING) -->
+        <div class="image-side">
+            <h1>Estacionamiento Don Carlos - Trujillo</h1>
+        </div>
 
-            <div class="input-group">
-                <label>Contraseña</label>
-                <div class="password-wrapper">
-                    <input type="password" id="login-pass" placeholder="••••••••" maxlength="15">
-                    <div class="toggle-password" onclick="togglePass('login-pass', this)">
-                        <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+        <!-- LADO DERECHO (FORMULARIO DE LOGIN) -->
+        <div class="form-side">
+            <div class="form-container">
+                <h2>Bienvenido</h2>
+                <p class="subtitle">Ingrese sus credenciales operativas</p>
+                
+                <div class="input-group">
+                    <label>Correo Electrónico</label>
+                    <input type="email" id="login-email" placeholder="ingrese su correo">
+                </div>
+
+                <div class="input-group">
+                    <label>Contraseña</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="login-pass" placeholder="••••••••" maxlength="15">
+                        
+                        <!-- Botón para ver/ocultar contraseña -->
+                        <div class="toggle-password" onclick="togglePass('login-pass', this)">
+                            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                <line x1="1" y1="1" x2="23" y2="23"></line>
+                            </svg>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <button class="btn-primary" onclick="login()">Ingresar</button>
+                <button class="btn-primary" onclick="login()">Iniciar Sesión</button>
+            </div>
         </div>
+
     </div>
 
+    <!-- Librería para Alertas Elegantes -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
         const BACKEND_URL = "https://backend-estacionamiento.vercel.app";
+
+        // --- FUNCIONALIDAD DEL ICONO DEL OJO ---
+        function togglePass(inputId, iconDiv) {
+            const input = document.getElementById(inputId);
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                // Cambia al icono de Ojo Abierto
+                iconDiv.innerHTML = `
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #3b82f6;">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                `;
+            } else {
+                input.type = 'password';
+                // Regresa al icono de Ojo Cerrado (Tachado)
+                iconDiv.innerHTML = `
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                    </svg>
+                `;
+            }
+        }
 
         // --- INICIAR SESIÓN CON BACKEND FASTAPI ---
         async function login() {
@@ -150,10 +294,16 @@
                     icon: 'warning',
                     title: 'Campos vacíos',
                     text: 'Por favor, ingrese sus credenciales.',
-                    confirmButtonColor: '#0d6efd'
+                    confirmButtonColor: '#3b82f6'
                 });
                 return;
             }
+
+            // Cambiar texto del botón mientras carga
+            const btn = document.querySelector('.btn-primary');
+            const originalText = btn.innerText;
+            btn.innerText = 'Verificando...';
+            btn.disabled = true;
 
             try {
                 const response = await fetch(`${BACKEND_URL}/api/auth/login`, {
@@ -167,29 +317,31 @@
                 if (response.ok) {
                     const data = await response.json();
                     
-                    // Guardamos el token y el rol de forma segura
+                    // Guardamos el token y el rol
                     localStorage.setItem('jwt_token', data.access_token);
                     localStorage.setItem('user_role', data.role || (email.includes('admin') ? 'admin' : 'operario'));
                     
                     // Redirigimos al panel de control
                     window.location.href = "index.html";
                 } else {
-                    // Contraseña o usuario incorrecto
                     Swal.fire({
                         icon: 'error',
                         title: 'Acceso Denegado',
                         text: 'El correo o la contraseña son incorrectos.',
-                        confirmButtonColor: '#0d6efd'
+                        confirmButtonColor: '#ef4444'
                     });
                 }
             } catch (error) {
-                // Servidor caído o sin internet
                 Swal.fire({
                     icon: 'error',
                     title: 'Error de conexión',
-                    text: 'No se pudo conectar con el servidor. Verifique que el Backend esté activo en Railway.',
-                    confirmButtonColor: '#0d6efd'
+                    text: 'No se pudo conectar con el servidor central.',
+                    confirmButtonColor: '#ef4444'
                 });
+            } finally {
+                // Restauramos el botón
+                btn.innerText = originalText;
+                btn.disabled = false;
             }
         }
     </script>
